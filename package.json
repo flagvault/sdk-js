@@ -1,17 +1,37 @@
 {
-  "name": "sdk-js-ffs",
-  "version": "1.0.0",
-  "main": "index.js",
+  "name": "@flagory/sdk",
+  "version": "0.0.1",
+  "description": "Lightweight JavaScript SDK for Flagory, enabling seamless feature flag integration and real-time flag status checks for modern web applications.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "jest",
     "lint": "eslint .",
     "prepublishOnly": "npm run build"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "keywords": [
+    "feature-flag",
+    "sdk",
+    "javascript",
+    "typescript",
+    "flagory"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/flagory/sdk-js.git"
+  },
+  "author": "Arjun Rao <arjun@flagory.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/flagory/sdk-js/issues"
+  },
+  "homepage": "https://github.com/flagory/sdk-js#readme",
   "devDependencies": {
     "@eslint/js": "^9.14.0",
     "@types/jest": "^29.5.14",
@@ -27,5 +47,8 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.6.3",
     "typescript-eslint": "^8.14.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

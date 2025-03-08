@@ -7,6 +7,11 @@
 - **Lint**: `npm run lint` - Run ESLint on all files
 - **Docs**: `npm run docs` - Generate TypeDoc documentation
 
+## Git Guidelines
+- **Commit Messages**: Use clear, descriptive commit messages
+- **Claude Attribution**: Do NOT include Claude attribution or co-authored-by in commit messages
+- **Commit Content**: Group related changes in single commits
+
 ## Code Style Guidelines
 - **TypeScript**: Strict mode enabled, explicit typing for interfaces
 - **Naming**: PascalCase for classes/interfaces (e.g., `FlagorySDK`), camelCase for variables/methods

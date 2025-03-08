@@ -9,7 +9,7 @@
   "theme": "default",
   "navigationLinks": {
     "FlagVault": "https://flagvault.com",
-    "GitHub": "https://github.com/flagory/sdk-js"
+    "GitHub": "https://github.com/flagvault/sdk-js"
   },
   "visibilityFilters": {
     "protected": false,
@@ -18,7 +18,7 @@
     "external": false
   },
   "searchInComments": true,
-  "sourceLinkTemplate": "https://github.com/flagory/sdk-js/blob/main/{path}#L{line}",
+  "sourceLinkTemplate": "https://github.com/flagvault/sdk-js/blob/main/{path}#L{line}",
   "hideGenerator": true,
   "customCss": "./assets/styles.css"
 }

@@ -1,9 +1,9 @@
-import FlagorySDK from "../src/index";
+import FlagVaultSDK from "../src/index";
 import fetchMock from "jest-fetch-mock";
 
-const baseUrl = "https://api.flagory.com";
+const baseUrl = "https://api.flagvault.com";
 
-describe("FlagorySDK", () => {
+describe("FlagVaultSDK", () => {
   beforeEach(() => {
     fetchMock.resetMocks(); // Reset mocks before each test
   });
@@ -12,7 +12,7 @@ describe("FlagorySDK", () => {
     // Mock a failed fetch request
     fetchMock.mockRejectOnce(new Error("Network error"));
 
-    const sdk = new FlagorySDK({
+    const sdk = new FlagVaultSDK({
       apiKey: "test-api-key",
       apiSecret: "test-api-secret",
     });
@@ -35,7 +35,7 @@ describe("FlagorySDK", () => {
   });
 
   it("should initialize correctly with valid config", () => {
-    const sdk = new FlagorySDK({
+    const sdk = new FlagVaultSDK({
       apiKey: "test-api-key",
       apiSecret: "test-api-secret",
     });
@@ -44,7 +44,7 @@ describe("FlagorySDK", () => {
   });
 
   it("should throw an error if initialized without API key or secret", () => {
-    expect(() => new FlagorySDK({ apiKey: "", apiSecret: "" })).toThrowError(
+    expect(() => new FlagVaultSDK({ apiKey: "", apiSecret: "" })).toThrowError(
       "API Key and Secret are required to initialize the SDK.",
     );
   });
@@ -53,7 +53,7 @@ describe("FlagorySDK", () => {
     // Mock the fetch response for a successful API call
     fetchMock.mockResponseOnce(JSON.stringify({ enabled: true }));
 
-    const sdk = new FlagorySDK({
+    const sdk = new FlagVaultSDK({
       apiKey: "test-api-key",
       apiSecret: "test-api-secret",
     });
@@ -77,7 +77,7 @@ describe("FlagorySDK", () => {
     // Mock the fetch response for a disabled feature flag
     fetchMock.mockResponseOnce(JSON.stringify({ enabled: false }));
 
-    const sdk = new FlagorySDK({
+    const sdk = new FlagVaultSDK({
       apiKey: "test-api-key",
       apiSecret: "test-api-secret",
     });
@@ -88,7 +88,7 @@ describe("FlagorySDK", () => {
   });
 
   it("should throw an error if flagId is missing", async () => {
-    const sdk = new FlagorySDK({
+    const sdk = new FlagVaultSDK({
       apiKey: "test-api-key",
       apiSecret: "test-api-secret",
     });
@@ -105,7 +105,7 @@ describe("FlagorySDK", () => {
       statusText: "Internal Server Error",
     });
 
-    const sdk = new FlagorySDK({
+    const sdk = new FlagVaultSDK({
       apiKey: "test-api-key",
       apiSecret: "test-api-secret",
     });

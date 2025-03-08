@@ -5,22 +5,22 @@ A lightweight TypeScript SDK for FlagVault, enabling seamless feature flag integ
 ## Installation
 
 ```bash
-npm install @flagory/sdk
+npm install @flagvault/sdk
 # or
-yarn add @flagory/sdk
+yarn add @flagvault/sdk
 ```
 
 ## Usage
 
 ```typescript
-import FlagorySDK from '@flagory/sdk';
+import FlagVaultSDK from '@flagvault/sdk';
 
 // Initialize the SDK with your API credentials
-const sdk = new FlagorySDK({
+const sdk = new FlagVaultSDK({
   apiKey: 'your-api-key',
   apiSecret: 'your-api-secret',
   // Optional: custom base URL
-  // baseUrl: 'https://custom-api.flagory.com'
+  // baseUrl: 'https://custom-api.flagvault.com'
 });
 
 // Check if a feature flag is enabled
@@ -45,7 +45,7 @@ checkFeature();
 
 ## API Documentation
 
-For complete API documentation, visit [our documentation site](https://flagory.github.io/sdk-js/).
+For complete API documentation, visit [our documentation site](https://flagvault.github.io/sdk-js/).
 
 ## Requirements
 

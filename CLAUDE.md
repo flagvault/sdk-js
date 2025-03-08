@@ -14,7 +14,7 @@
 
 ## Code Style Guidelines
 - **TypeScript**: Strict mode enabled, explicit typing for interfaces
-- **Naming**: PascalCase for classes/interfaces (e.g., `FlagorySDK`), camelCase for variables/methods
+- **Naming**: PascalCase for classes/interfaces (e.g., `FlagVaultSDK`), camelCase for variables/methods
 - **JSDoc**: Include comprehensive JSDoc comments for public API methods and interfaces
 - **Error Handling**: Use explicit error messages, validate parameters before use
 - **Imports**: External imports first, then internal imports

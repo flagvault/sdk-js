@@ -3,7 +3,7 @@
  * 
  * @group Configuration
  */
-export interface FlagorySDKConfig {
+export interface FlagVaultSDKConfig {
   /**
    * API Key for authenticating with the FlagVault service.
    * Can be obtained from your FlagVault dashboard.
@@ -18,7 +18,7 @@ export interface FlagorySDKConfig {
 
   /**
    * Optional base URL for the FlagVault API.
-   * Defaults to "https://api.flagory.com".
+   * Defaults to "https://api.flagvault.com".
    */
   baseUrl?: string;
 }
@@ -33,17 +33,17 @@ export interface FlagorySDKConfig {
  * ## Installation
  * 
  * ```bash
- * npm install @flagory/sdk
+ * npm install @flagvault/sdk
  * # or
- * yarn add @flagory/sdk
+ * yarn add @flagvault/sdk
  * ```
  * 
  * ## Basic Usage
  * 
  * ```typescript
- * import FlagorySDK from '@flagory/sdk';
+ * import FlagVaultSDK from '@flagvault/sdk';
  * 
- * const sdk = new FlagorySDK({
+ * const sdk = new FlagVaultSDK({
  *   apiKey: 'your-api-key',
  *   apiSecret: 'your-api-secret'
  * });
@@ -71,7 +71,7 @@ export interface FlagorySDKConfig {
  * 
  * @group Core
  */
-class FlagorySDK {
+class FlagVaultSDK {
   private apiKey: string;
   private apiSecret: string;
   private baseUrl: string;
@@ -82,8 +82,8 @@ class FlagorySDK {
    * @param config - Configuration options for the SDK
    * @throws Error if apiKey or apiSecret is not provided
    */
-  constructor(config: FlagorySDKConfig) {
-    const { apiKey, apiSecret, baseUrl = "https://api.flagory.com" } = config;
+  constructor(config: FlagVaultSDKConfig) {
+    const { apiKey, apiSecret, baseUrl = "https://api.flagvault.com" } = config;
 
     if (!apiKey || !apiSecret) {
       throw new Error("API Key and Secret are required to initialize the SDK.");
@@ -126,4 +126,4 @@ class FlagorySDK {
   }
 }
 
-export default FlagorySDK;
+export default FlagVaultSDK;

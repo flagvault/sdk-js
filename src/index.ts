@@ -1,14 +1,87 @@
-interface FlagorySDKConfig {
+/**
+ * Configuration options for the FlagVault SDK.
+ * 
+ * @group Configuration
+ */
+export interface FlagorySDKConfig {
+  /**
+   * API Key for authenticating with the FlagVault service.
+   * Can be obtained from your FlagVault dashboard.
+   */
   apiKey: string;
+
+  /**
+   * API Secret for authenticating with the FlagVault service.
+   * Can be obtained from your FlagVault dashboard.
+   */
   apiSecret: string;
+
+  /**
+   * Optional base URL for the FlagVault API.
+   * Defaults to "https://api.flagory.com".
+   */
   baseUrl?: string;
 }
 
+/**
+ * FlagVault SDK for feature flag management.
+ * 
+ * This SDK allows you to easily integrate feature flags into your JavaScript/TypeScript applications.
+ * Feature flags (also known as feature toggles) allow you to enable or disable features in your
+ * application without deploying new code.
+ * 
+ * ## Installation
+ * 
+ * ```bash
+ * npm install @flagory/sdk
+ * # or
+ * yarn add @flagory/sdk
+ * ```
+ * 
+ * ## Basic Usage
+ * 
+ * ```typescript
+ * import FlagorySDK from '@flagory/sdk';
+ * 
+ * const sdk = new FlagorySDK({
+ *   apiKey: 'your-api-key',
+ *   apiSecret: 'your-api-secret'
+ * });
+ * 
+ * // Check if a feature flag is enabled
+ * const isEnabled = await sdk.isEnabled('my-feature-flag');
+ * if (isEnabled) {
+ *   // Feature is enabled, run feature code
+ * } else {
+ *   // Feature is disabled, run fallback code
+ * }
+ * ```
+ * 
+ * ## Error Handling
+ * 
+ * ```typescript
+ * try {
+ *   const isEnabled = await sdk.isEnabled('my-feature-flag');
+ *   // ...
+ * } catch (error) {
+ *   // Handle error (network issues, invalid API credentials, etc.)
+ *   console.error('Error checking feature flag:', error);
+ * }
+ * ```
+ * 
+ * @group Core
+ */
 class FlagorySDK {
   private apiKey: string;
   private apiSecret: string;
   private baseUrl: string;
 
+  /**
+   * Creates a new instance of the FlagVault SDK.
+   * 
+   * @param config - Configuration options for the SDK
+   * @throws Error if apiKey or apiSecret is not provided
+   */
   constructor(config: FlagorySDKConfig) {
     const { apiKey, apiSecret, baseUrl = "https://api.flagory.com" } = config;
 
@@ -21,6 +94,14 @@ class FlagorySDK {
     this.baseUrl = baseUrl;
   }
 
+  /**
+   * Checks if a feature flag is enabled.
+   * 
+   * @param flagId - The unique identifier for the feature flag
+   * @returns A promise that resolves to a boolean indicating if the feature is enabled
+   * @throws Error if flagId is not provided
+   * @throws Error if the API request fails
+   */
   async isEnabled(flagId: string): Promise<boolean> {
     if (!flagId) {
       throw new Error("flagId is required to check if a feature is enabled.");

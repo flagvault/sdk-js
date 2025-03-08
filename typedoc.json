@@ -1,0 +1,24 @@
+{
+  "entryPoints": ["./src/index.ts"],
+  "out": "docs",
+  "name": "FlagVault SDK",
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "excludeExternals": true,
+  "readme": "README.md",
+  "theme": "default",
+  "navigationLinks": {
+    "FlagVault": "https://flagvault.com",
+    "GitHub": "https://github.com/flagory/sdk-js"
+  },
+  "visibilityFilters": {
+    "protected": false,
+    "private": false,
+    "inherited": true,
+    "external": false
+  },
+  "searchInComments": true,
+  "sourceLinkTemplate": "https://github.com/flagory/sdk-js/blob/main/{path}#L{line}",
+  "hideGenerator": true,
+  "customCss": "./assets/styles.css"
+}

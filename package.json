@@ -28,7 +28,7 @@
     "type": "git",
     "url": "https://github.com/flagvault/sdk-js.git"
   },
-  "author": "Arjun Rao <arjun@flagvault.com>",
+  "author": "FlagVault <accounts@flagvault.com>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/flagvault/sdk-js/issues"

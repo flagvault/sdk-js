@@ -1,4 +1,9 @@
-import FlagVaultSDK from "../src/index";
+import FlagVaultSDK, {
+  FlagVaultError,
+  FlagVaultAuthenticationError,
+  FlagVaultNetworkError,
+  FlagVaultAPIError,
+} from "../src/index";
 import fetchMock from "jest-fetch-mock";
 
 const baseUrl = "https://api.flagvault.com";
@@ -8,29 +13,21 @@ describe("FlagVaultSDK", () => {
     fetchMock.resetMocks(); // Reset mocks before each test
   });
 
-  it("should throw an error when the fetch request fails", async () => {
-    // Mock a failed fetch request
-    fetchMock.mockRejectOnce(new Error("Network error"));
+  it("should throw FlagVaultNetworkError when the fetch request fails", async () => {
+    // Mock a failed fetch request (twice for two expect calls)
+    fetchMock.mockRejectOnce(new TypeError("Failed to fetch"));
+    fetchMock.mockRejectOnce(new TypeError("Failed to fetch"));
 
     const sdk = new FlagVaultSDK({
       apiKey: "test-api-key",
       apiSecret: "test-api-secret",
     });
 
-    // Expect the original error to propagate
-    await expect(sdk.isEnabled("test-flag-id")).rejects.toThrowError(
-      "Network error",
+    await expect(sdk.isEnabled("test-flag-key")).rejects.toThrow(
+      FlagVaultNetworkError,
     );
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      `${baseUrl}/feature-flag/test-flag-id/enabled`,
-      {
-        method: "GET",
-        headers: {
-          "X-API-Key": "test-api-key",
-          "X-API-Secret": "test-api-secret",
-        },
-      },
+    await expect(sdk.isEnabled("test-flag-key")).rejects.toThrow(
+      "Failed to connect to FlagVault API",
     );
   });
 
@@ -38,6 +35,17 @@ describe("FlagVaultSDK", () => {
     const sdk = new FlagVaultSDK({
       apiKey: "test-api-key",
       apiSecret: "test-api-secret",
+    });
+
+    expect(sdk).toBeDefined();
+  });
+
+  it("should initialize correctly with custom config", () => {
+    const sdk = new FlagVaultSDK({
+      apiKey: "test-api-key",
+      apiSecret: "test-api-secret",
+      baseUrl: "https://custom.api.com",
+      timeout: 5000,
     });
 
     expect(sdk).toBeDefined();
@@ -58,17 +66,17 @@ describe("FlagVaultSDK", () => {
       apiSecret: "test-api-secret",
     });
 
-    const isEnabled = await sdk.isEnabled("test-flag-id");
+    const isEnabled = await sdk.isEnabled("test-flag-key");
 
     expect(fetchMock).toHaveBeenCalledWith(
-      `${baseUrl}/feature-flag/test-flag-id/enabled`,
-      {
+      `${baseUrl}/feature-flag/test-flag-key/enabled`,
+      expect.objectContaining({
         method: "GET",
         headers: {
           "X-API-Key": "test-api-key",
           "X-API-Secret": "test-api-secret",
         },
-      },
+      }),
     );
     expect(isEnabled).toBe(true);
   });
@@ -82,25 +90,89 @@ describe("FlagVaultSDK", () => {
       apiSecret: "test-api-secret",
     });
 
-    const isEnabled = await sdk.isEnabled("test-flag-id");
+    const isEnabled = await sdk.isEnabled("test-flag-key");
 
     expect(isEnabled).toBe(false);
   });
 
-  it("should throw an error if flagId is missing", async () => {
+  it("should throw an error if flagKey is missing", async () => {
     const sdk = new FlagVaultSDK({
       apiKey: "test-api-key",
       apiSecret: "test-api-secret",
     });
 
-    await expect(sdk.isEnabled("")).rejects.toThrowError(
-      "flagId is required to check if a feature is enabled.",
+    await expect(sdk.isEnabled("")).rejects.toThrow(
+      "flagKey is required to check if a feature is enabled.",
     );
   });
 
-  it("should throw an error when the API response is not OK", async () => {
-    // Mock a response with a failing status code (500 Internal Server Error)
-    fetchMock.mockResponseOnce("", {
+  it("should throw FlagVaultAuthenticationError for 401 responses", async () => {
+    // Mock twice for two expect calls
+    fetchMock.mockResponseOnce(JSON.stringify({ message: "Unauthorized" }), { status: 401 });
+    fetchMock.mockResponseOnce(JSON.stringify({ message: "Unauthorized" }), { status: 401 });
+
+    const sdk = new FlagVaultSDK({
+      apiKey: "test-api-key",
+      apiSecret: "test-api-secret",
+    });
+
+    await expect(sdk.isEnabled("test-flag-key")).rejects.toThrow(
+      FlagVaultAuthenticationError,
+    );
+    await expect(sdk.isEnabled("test-flag-key")).rejects.toThrow(
+      "Invalid API credentials",
+    );
+  });
+
+  it("should throw FlagVaultAuthenticationError for 403 responses", async () => {
+    // Mock twice for two expect calls
+    fetchMock.mockResponseOnce(JSON.stringify({ message: "Forbidden" }), { status: 403 });
+    fetchMock.mockResponseOnce(JSON.stringify({ message: "Forbidden" }), { status: 403 });
+
+    const sdk = new FlagVaultSDK({
+      apiKey: "test-api-key",
+      apiSecret: "test-api-secret",
+    });
+
+    await expect(sdk.isEnabled("test-flag-key")).rejects.toThrow(
+      FlagVaultAuthenticationError,
+    );
+    await expect(sdk.isEnabled("test-flag-key")).rejects.toThrow(
+      "Access forbidden - check your API credentials",
+    );
+  });
+
+  it("should throw FlagVaultAPIError for other HTTP errors", async () => {
+    // Mock twice for two expect calls
+    fetchMock.mockResponseOnce(
+      JSON.stringify({ message: "Internal Server Error" }),
+      { status: 500 },
+    );
+    fetchMock.mockResponseOnce(
+      JSON.stringify({ message: "Internal Server Error" }),
+      { status: 500 },
+    );
+
+    const sdk = new FlagVaultSDK({
+      apiKey: "test-api-key",
+      apiSecret: "test-api-secret",
+    });
+
+    await expect(sdk.isEnabled("test-flag-key")).rejects.toThrow(
+      FlagVaultAPIError,
+    );
+    await expect(sdk.isEnabled("test-flag-key")).rejects.toThrow(
+      "API request failed: Internal Server Error",
+    );
+  });
+
+  it("should throw FlagVaultAPIError when HTTP error response has invalid JSON", async () => {
+    // Mock twice for two expect calls
+    fetchMock.mockResponseOnce("<html>Internal Server Error</html>", {
+      status: 500,
+      statusText: "Internal Server Error",
+    });
+    fetchMock.mockResponseOnce("<html>Internal Server Error</html>", {
       status: 500,
       statusText: "Internal Server Error",
     });
@@ -110,21 +182,138 @@ describe("FlagVaultSDK", () => {
       apiSecret: "test-api-secret",
     });
 
-    // Expect the method to throw the appropriate error
-    await expect(sdk.isEnabled("test-flag-id")).rejects.toThrowError(
-      "HTTP error! Status: 500",
+    await expect(sdk.isEnabled("test-flag-key")).rejects.toThrow(
+      FlagVaultAPIError,
     );
+    await expect(sdk.isEnabled("test-flag-key")).rejects.toThrow(
+      "API request failed: HTTP 500: Internal Server Error",
+    );
+  });
 
-    // Ensure the correct request was made
+  it("should throw FlagVaultNetworkError when request times out", async () => {
+    // Mock AbortError for timeout (twice for two expect calls)
+    fetchMock.mockAbortOnce();
+    fetchMock.mockAbortOnce();
+
+    const sdk = new FlagVaultSDK({
+      apiKey: "test-api-key",
+      apiSecret: "test-api-secret",
+      timeout: 1000,
+    });
+
+    await expect(sdk.isEnabled("test-flag-key")).rejects.toThrow(
+      FlagVaultNetworkError,
+    );
+    await expect(sdk.isEnabled("test-flag-key")).rejects.toThrow(
+      "Request timed out after 1000ms",
+    );
+  });
+
+  it("should throw FlagVaultAPIError when response is not valid JSON", async () => {
+    fetchMock.mockResponseOnce("invalid json");
+
+    const sdk = new FlagVaultSDK({
+      apiKey: "test-api-key",
+      apiSecret: "test-api-secret",
+    });
+
+    await expect(sdk.isEnabled("test-flag-key")).rejects.toThrow(
+      FlagVaultAPIError,
+    );
+    await expect(sdk.isEnabled("test-flag-key")).rejects.toThrow(
+      "Invalid JSON response",
+    );
+  });
+
+  it("should return false when enabled field is missing from response", async () => {
+    fetchMock.mockResponseOnce(JSON.stringify({ other_field: "value" }));
+
+    const sdk = new FlagVaultSDK({
+      apiKey: "test-api-key",
+      apiSecret: "test-api-secret",
+    });
+
+    const isEnabled = await sdk.isEnabled("test-flag-key");
+    expect(isEnabled).toBe(false);
+  });
+
+  it("should throw Error when flag_key is null or undefined", async () => {
+    const sdk = new FlagVaultSDK({
+      apiKey: "test-api-key",
+      apiSecret: "test-api-secret",
+    });
+
+    await expect(sdk.isEnabled(null as any)).rejects.toThrow(
+      "flagKey is required to check if a feature is enabled.",
+    );
+    await expect(sdk.isEnabled(undefined as any)).rejects.toThrow(
+      "flagKey is required to check if a feature is enabled.",
+    );
+  });
+
+  it("should handle flag keys with special characters", async () => {
+    fetchMock.mockResponseOnce(JSON.stringify({ enabled: true }));
+
+    const sdk = new FlagVaultSDK({
+      apiKey: "test-api-key",
+      apiSecret: "test-api-secret",
+    });
+
+    const flagKey = "test-flag_key.with$pecial@chars";
+    const isEnabled = await sdk.isEnabled(flagKey);
+
+    expect(isEnabled).toBe(true);
     expect(fetchMock).toHaveBeenCalledWith(
-      `${baseUrl}/feature-flag/test-flag-id/enabled`,
-      {
+      `${baseUrl}/feature-flag/${flagKey}/enabled`,
+      expect.objectContaining({
         method: "GET",
         headers: {
           "X-API-Key": "test-api-key",
           "X-API-Secret": "test-api-secret",
         },
-      },
+      }),
+    );
+  });
+
+  it("should throw FlagVaultNetworkError for generic RequestException", async () => {
+    // Mock generic error (not TypeError or AbortError)
+    fetchMock.mockRejectOnce(new Error("Generic network error"));
+    fetchMock.mockRejectOnce(new Error("Generic network error"));
+
+    const sdk = new FlagVaultSDK({
+      apiKey: "test-api-key",
+      apiSecret: "test-api-secret",
+    });
+
+    await expect(sdk.isEnabled("test-flag-key")).rejects.toThrow(
+      FlagVaultNetworkError,
+    );
+    await expect(sdk.isEnabled("test-flag-key")).rejects.toThrow(
+      "Network error: Error: Generic network error",
+    );
+  });
+
+  it("should throw FlagVaultAPIError with HTTP status when error JSON has no message", async () => {
+    // Mock error response with JSON that has no message field
+    fetchMock.mockResponseOnce(
+      JSON.stringify({ error: "Something went wrong", code: 500 }),
+      { status: 500 },
+    );
+    fetchMock.mockResponseOnce(
+      JSON.stringify({ error: "Something went wrong", code: 500 }),
+      { status: 500 },
+    );
+
+    const sdk = new FlagVaultSDK({
+      apiKey: "test-api-key",
+      apiSecret: "test-api-secret",
+    });
+
+    await expect(sdk.isEnabled("test-flag-key")).rejects.toThrow(
+      FlagVaultAPIError,
+    );
+    await expect(sdk.isEnabled("test-flag-key")).rejects.toThrow(
+      "API request failed: HTTP 500",
     );
   });
 });

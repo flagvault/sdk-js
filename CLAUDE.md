@@ -5,7 +5,6 @@
 - **Test**: `npm test` - Run all tests
 - **Test Single File**: `npm test -- tests/path/to/file.test.ts` - Run specific test
 - **Lint**: `npm run lint` - Run ESLint on all files
-- **Docs**: `npm run docs` - Generate TypeDoc documentation
 
 ## Git Guidelines
 - **Commit Messages**: Use clear, descriptive commit messages
@@ -27,6 +26,5 @@
 ## Project Structure
 - Source code in `src/` directory
 - Tests in `tests/` directory with `.test.ts` extension
-- API documentation in `docs/` directory
 - Compiled output to `dist/` directory
 - TypeScript configuration in `tsconfig.json`

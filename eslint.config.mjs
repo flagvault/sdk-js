@@ -7,10 +7,17 @@ import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended"
 export default [
   {
     files: ["**/*.{js,mjs,cjs,ts}"],
+    ignores: ["dist/**", "node_modules/**", "coverage/**"],
   },
   { languageOptions: { globals: { ...globals.browser, ...globals.node } } },
   pluginJs.configs.recommended,
   ...tseslint.configs.recommended,
   eslintPluginPrettierRecommended,
-  // pluginJest,
+  // Allow CommonJS in examples
+  {
+    files: ["examples/**/*.js"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+    },
+  },
 ];

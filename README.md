@@ -28,12 +28,13 @@ yarn add @flagvault/sdk
 ```typescript
 import FlagVaultSDK, { FlagVaultAuthenticationError, FlagVaultNetworkError } from '@flagvault/sdk';
 
-// Initialize the SDK with your API credentials
+// Initialize the SDK with your API key
+// Environment is automatically detected from the key prefix:
+// - 'live_' prefix = production environment
+// - 'test_' prefix = test environment
 const sdk = new FlagVaultSDK({
-  apiKey: 'your-api-key',
-  apiSecret: 'your-api-secret',
-  // Optional: custom base URL and timeout
-  // baseUrl: 'https://custom-api.flagvault.com',
+  apiKey: 'live_your-api-key-here', // Use 'test_' for test environment
+  // Optional: custom timeout
   // timeout: 10000
 });
 
@@ -80,7 +81,7 @@ The SDK centers around one main class and method:
 
 ```typescript
 // Initialize once
-const sdk = new FlagVaultSDK({ apiKey: 'key', apiSecret: 'secret' });
+const sdk = new FlagVaultSDK({ apiKey: 'live_your-api-key-here' });
 
 // Use throughout your application
 if (await sdk.isEnabled('new-checkout-flow')) {
@@ -92,11 +93,12 @@ if (await sdk.isEnabled('new-checkout-flow')) {
 
 ### How It Works
 
-1. **Initialize**: Create SDK instance with API credentials from your FlagVault dashboard
-2. **Check Flag**: Call `isEnabled('flag-key')` anywhere in your code
-3. **HTTP Request**: SDK makes secure GET request to FlagVault API
-4. **Parse Response**: Returns boolean from API response
-5. **Handle Errors**: Specific exceptions for different failure scenarios
+1. **Initialize**: Create SDK instance with API key from your FlagVault dashboard
+2. **Environment Detection**: Environment automatically determined from key prefix (live_/test_)
+3. **Check Flag**: Call `isEnabled('flag-key')` anywhere in your code
+4. **HTTP Request**: SDK makes secure GET request to FlagVault API
+5. **Parse Response**: Returns boolean from API response
+6. **Handle Errors**: Specific exceptions for different failure scenarios
 
 ## Error Handling
 
@@ -141,17 +143,33 @@ try {
 
 ### SDK Parameters
 
-- **`apiKey`** (required): Your FlagVault API key
-- **`apiSecret`** (required): Your FlagVault API secret  
-- **`baseUrl`** (optional): Custom API endpoint. Defaults to `https://api.flagvault.com`
+- **`apiKey`** (required): Your FlagVault API key with environment prefix
+  - `live_` prefix for production environment  
+  - `test_` prefix for test environment
 - **`timeout`** (optional): Request timeout in milliseconds. Defaults to 10000
+
+### Environment Management
+
+The SDK automatically detects the environment from your API key prefix:
+
+```typescript
+// Production environment
+const prodSdk = new FlagVaultSDK({
+  apiKey: 'live_abc123...' // Automatically uses production environment
+});
+
+// Test environment  
+const testSdk = new FlagVaultSDK({
+  apiKey: 'test_xyz789...' // Automatically uses test environment
+});
+```
 
 ### Getting API Credentials
 
 1. Sign up at [FlagVault](https://flagvault.com)
-2. Create a new project
+2. Create a new organization
 3. Go to Settings > API Credentials
-4. Generate new API credentials
+4. You'll see separate API keys for production and test environments
 
 ## API Reference
 
@@ -160,13 +178,11 @@ try {
 Creates a new FlagVault SDK instance.
 
 **Parameters:**
-- `config.apiKey` (string): Your FlagVault API key
-- `config.apiSecret` (string): Your FlagVault API secret
-- `config.baseUrl` (string, optional): Custom API endpoint
+- `config.apiKey` (string): Your FlagVault API key with environment prefix (live_/test_)
 - `config.timeout` (number, optional): Request timeout in milliseconds
 
 **Throws:**
-- `Error`: If apiKey or apiSecret is empty
+- `Error`: If apiKey is empty
 
 ### `isEnabled(flagKey: string): Promise<boolean>`
 

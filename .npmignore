@@ -1,0 +1,41 @@
+# Source files
+src/
+tests/
+examples/
+
+# Config files
+.eslintrc.*
+.prettierrc
+jest.config.ts
+tsconfig.json
+eslint.config.mjs
+
+# Development files
+*.test.ts
+*.test.js
+coverage/
+.nyc_output/
+
+# CI/CD
+.github/
+.travis.yml
+.circleci/
+
+# Misc
+.DS_Store
+.idea/
+.vscode/
+*.log
+node_modules/
+.env
+.env.*
+
+# Documentation source
+docs/
+
+# Keep these files
+!dist/
+!README.md
+!LICENSE
+!CHANGELOG.md
+!package.json

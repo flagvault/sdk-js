@@ -1,8 +1,8 @@
 import FlagVaultSDK, {
   FlagVaultAuthenticationError,
   FlagVaultNetworkError,
-  FlagVaultAPIError
-} from '@flagvault/sdk';
+  FlagVaultAPIError,
+} from "@flagvault/sdk";
 
 // Example TypeScript usage of the FlagVault SDK
 
@@ -15,11 +15,10 @@ interface FeatureConfig {
 class FeatureManager {
   private sdk: FlagVaultSDK;
 
-  constructor(apiKey: string, apiSecret: string) {
+  constructor(apiKey: string) {
     this.sdk = new FlagVaultSDK({
-      apiKey,
-      apiSecret,
-      timeout: 5000 // 5 second timeout
+      apiKey, // Environment auto-detected from key prefix (live_/test_)
+      timeout: 5000, // 5 second timeout
     });
   }
 
@@ -29,24 +28,24 @@ class FeatureManager {
   async getFeatureConfig(): Promise<FeatureConfig> {
     try {
       const [newUI, premiumFeatures, experimentalAPI] = await Promise.all([
-        this.sdk.isEnabled('new-ui-design'),
-        this.sdk.isEnabled('premium-features'),
-        this.sdk.isEnabled('experimental-api')
+        this.sdk.isEnabled("new-ui-design"),
+        this.sdk.isEnabled("premium-features"),
+        this.sdk.isEnabled("experimental-api"),
       ]);
 
       return {
         newUI,
         premiumFeatures,
-        experimentalAPI
+        experimentalAPI,
       };
     } catch (error) {
-      console.error('Failed to fetch feature configuration:', error);
-      
+      console.error("Failed to fetch feature configuration:", error);
+
       // Return safe defaults on error
       return {
         newUI: false,
         premiumFeatures: false,
-        experimentalAPI: false
+        experimentalAPI: false,
       };
     }
   }
@@ -59,7 +58,10 @@ class FeatureManager {
       return await this.sdk.isEnabled(flagKey);
     } catch (error) {
       if (error instanceof FlagVaultAuthenticationError) {
-        console.error(`Authentication failed for flag '${flagKey}':`, error.message);
+        console.error(
+          `Authentication failed for flag '${flagKey}':`,
+          error.message,
+        );
         // Handle auth errors - maybe refresh credentials
       } else if (error instanceof FlagVaultNetworkError) {
         console.error(`Network error for flag '${flagKey}':`, error.message);
@@ -70,7 +72,7 @@ class FeatureManager {
       } else {
         console.error(`Unexpected error for flag '${flagKey}':`, error);
       }
-      
+
       // Return safe default
       return false;
     }
@@ -79,38 +81,46 @@ class FeatureManager {
 
 // Example usage
 async function main(): Promise<void> {
-  const apiKey = process.env.FLAGVAULT_API_KEY || 'your-api-key';
-  const apiSecret = process.env.FLAGVAULT_API_SECRET || 'your-api-secret';
+  // Use environment-specific API key
+  // For production: FLAGVAULT_API_KEY=live_abc123...
+  // For test: FLAGVAULT_API_KEY=test_xyz789...
+  const apiKey = process.env.FLAGVAULT_API_KEY || "live_your-api-key-here";
 
-  const featureManager = new FeatureManager(apiKey, apiSecret);
+  const featureManager = new FeatureManager(apiKey);
 
-  console.log('🎯 TypeScript Feature Manager Example');
-  console.log('=====================================');
+  console.log("🎯 TypeScript Feature Manager Example");
+  console.log("=====================================");
 
   // Get all feature configuration
   const config = await featureManager.getFeatureConfig();
-  console.log('\n📋 Feature Configuration:');
-  console.log('  New UI:', config.newUI ? '✅ Enabled' : '❌ Disabled');
-  console.log('  Premium Features:', config.premiumFeatures ? '✅ Enabled' : '❌ Disabled');
-  console.log('  Experimental API:', config.experimentalAPI ? '✅ Enabled' : '❌ Disabled');
+  console.log("\n📋 Feature Configuration:");
+  console.log("  New UI:", config.newUI ? "✅ Enabled" : "❌ Disabled");
+  console.log(
+    "  Premium Features:",
+    config.premiumFeatures ? "✅ Enabled" : "❌ Disabled",
+  );
+  console.log(
+    "  Experimental API:",
+    config.experimentalAPI ? "✅ Enabled" : "❌ Disabled",
+  );
 
   // Check individual flags
-  console.log('\n🔍 Individual Flag Checks:');
-  const testFlag = await featureManager.checkFeatureFlag('test');
-  console.log(`  Test Flag: ${testFlag ? '✅ Enabled' : '❌ Disabled'}`);
+  console.log("\n🔍 Individual Flag Checks:");
+  const testFlag = await featureManager.checkFeatureFlag("test");
+  console.log(`  Test Flag: ${testFlag ? "✅ Enabled" : "❌ Disabled"}`);
 
   // Example of conditional feature execution
   if (config.newUI) {
-    console.log('\n🎨 Rendering new UI design...');
+    console.log("\n🎨 Rendering new UI design...");
   } else {
-    console.log('\n🎨 Rendering classic UI...');
+    console.log("\n🎨 Rendering classic UI...");
   }
 
   if (config.premiumFeatures) {
-    console.log('💎 Premium features are available');
+    console.log("💎 Premium features are available");
   }
 
-  console.log('\n✨ TypeScript example completed');
+  console.log("\n✨ TypeScript example completed");
 }
 
 // Run the example

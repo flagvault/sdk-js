@@ -2,63 +2,75 @@
 
 This directory contains practical examples of how to use the FlagVault JavaScript/TypeScript SDK.
 
-## Examples
+## Files
 
-### 1. Basic Usage (`basic-usage.js`)
+- **`basic-usage.js`** - Basic JavaScript usage with CommonJS
+- **`typescript-usage.ts`** - Advanced TypeScript usage with error handling
 
-A simple JavaScript example showing:
-- SDK initialization
-- Basic feature flag checking
-- Error handling with specific exception types
-- Console output for demonstration
+## Environment Setup
 
-**Run with:**
+### API Keys
+
+FlagVault provides separate API keys for different environments:
+
+- **Production Environment**: API keys prefixed with `live_`
+- **Test Environment**: API keys prefixed with `test_`
+
+### Environment Variables
+
+Set up your environment variables:
+
 ```bash
-# Set your credentials
-export FLAGVAULT_API_KEY="your-api-key"
-export FLAGVAULT_API_SECRET="your-api-secret"
+# For production
+export FLAGVAULT_API_KEY="live_your-production-api-key-here"
 
-# Run the example
-node examples/basic-usage.js
+# For test/development  
+export FLAGVAULT_API_KEY="test_your-test-api-key-here"
 ```
 
-### 2. TypeScript Usage (`typescript-usage.ts`)
+### Running Examples
 
-An advanced TypeScript example demonstrating:
-- Type-safe SDK usage
-- Feature manager class pattern
-- Batch flag checking with Promise.all
-- Detailed error handling strategies
-- Safe defaults on errors
-
-**Run with:**
 ```bash
-# Set your credentials
-export FLAGVAULT_API_KEY="your-api-key"
-export FLAGVAULT_API_SECRET="your-api-secret"
+# Basic JavaScript example
+node basic-usage.js
 
-# Compile and run (if you have ts-node installed)
-npx ts-node examples/typescript-usage.ts
-
-# Or compile first
-npx tsc examples/typescript-usage.ts --target es2017 --module commonjs
-node examples/typescript-usage.js
+# TypeScript example (requires compilation)
+npx ts-node typescript-usage.ts
+# Or compile first: npx tsc typescript-usage.ts && node typescript-usage.js
 ```
 
 ## Getting API Credentials
 
 1. Sign up at [FlagVault](https://flagvault.com)
-2. Create a new project
+2. Create a new organization
 3. Go to Settings > API Credentials
-4. Generate new API credentials
-5. Set them as environment variables or replace the placeholder values
+4. You'll see separate API keys for production and test environments
+
+## Environment Detection
+
+The SDK automatically determines which environment to use based on your API key prefix:
+
+```typescript
+// This will use the production environment
+const prodSdk = new FlagVaultSDK({ 
+  apiKey: 'live_abc123...' 
+});
+
+// This will use the test environment
+const testSdk = new FlagVaultSDK({ 
+  apiKey: 'test_xyz789...' 
+});
+```
+
+No additional configuration needed!
 
 ## Common Patterns
 
-### Environment Variables
-```bash
-export FLAGVAULT_API_KEY="your-api-key-here"
-export FLAGVAULT_API_SECRET="your-api-secret-here"
+### Single API Key Initialization
+```typescript
+const sdk = new FlagVaultSDK({
+  apiKey: process.env.FLAGVAULT_API_KEY // Environment auto-detected from prefix
+});
 ```
 
 ### Error Handling Strategy

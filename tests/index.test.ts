@@ -1,12 +1,11 @@
 import FlagVaultSDK, {
-  FlagVaultError,
   FlagVaultAuthenticationError,
   FlagVaultNetworkError,
   FlagVaultAPIError,
 } from "../src/index";
 import fetchMock from "jest-fetch-mock";
 
-const baseUrl = "https://api.flagvault.com";
+const baseUrl = "https://api.flagvault.com/api";
 
 describe("FlagVaultSDK", () => {
   beforeEach(() => {
@@ -20,7 +19,6 @@ describe("FlagVaultSDK", () => {
 
     const sdk = new FlagVaultSDK({
       apiKey: "test-api-key",
-      apiSecret: "test-api-secret",
     });
 
     await expect(sdk.isEnabled("test-flag-key")).rejects.toThrow(
@@ -34,7 +32,6 @@ describe("FlagVaultSDK", () => {
   it("should initialize correctly with valid config", () => {
     const sdk = new FlagVaultSDK({
       apiKey: "test-api-key",
-      apiSecret: "test-api-secret",
     });
 
     expect(sdk).toBeDefined();
@@ -43,7 +40,6 @@ describe("FlagVaultSDK", () => {
   it("should initialize correctly with custom config", () => {
     const sdk = new FlagVaultSDK({
       apiKey: "test-api-key",
-      apiSecret: "test-api-secret",
       baseUrl: "https://custom.api.com",
       timeout: 5000,
     });
@@ -52,8 +48,8 @@ describe("FlagVaultSDK", () => {
   });
 
   it("should throw an error if initialized without API key or secret", () => {
-    expect(() => new FlagVaultSDK({ apiKey: "", apiSecret: "" })).toThrowError(
-      "API Key and Secret are required to initialize the SDK.",
+    expect(() => new FlagVaultSDK({ apiKey: "" })).toThrowError(
+      "API Key is required to initialize the SDK.",
     );
   });
 
@@ -63,7 +59,6 @@ describe("FlagVaultSDK", () => {
 
     const sdk = new FlagVaultSDK({
       apiKey: "test-api-key",
-      apiSecret: "test-api-secret",
     });
 
     const isEnabled = await sdk.isEnabled("test-flag-key");
@@ -74,7 +69,6 @@ describe("FlagVaultSDK", () => {
         method: "GET",
         headers: {
           "X-API-Key": "test-api-key",
-          "X-API-Secret": "test-api-secret",
         },
       }),
     );
@@ -87,7 +81,6 @@ describe("FlagVaultSDK", () => {
 
     const sdk = new FlagVaultSDK({
       apiKey: "test-api-key",
-      apiSecret: "test-api-secret",
     });
 
     const isEnabled = await sdk.isEnabled("test-flag-key");
@@ -98,7 +91,6 @@ describe("FlagVaultSDK", () => {
   it("should throw an error if flagKey is missing", async () => {
     const sdk = new FlagVaultSDK({
       apiKey: "test-api-key",
-      apiSecret: "test-api-secret",
     });
 
     await expect(sdk.isEnabled("")).rejects.toThrow(
@@ -108,12 +100,15 @@ describe("FlagVaultSDK", () => {
 
   it("should throw FlagVaultAuthenticationError for 401 responses", async () => {
     // Mock twice for two expect calls
-    fetchMock.mockResponseOnce(JSON.stringify({ message: "Unauthorized" }), { status: 401 });
-    fetchMock.mockResponseOnce(JSON.stringify({ message: "Unauthorized" }), { status: 401 });
+    fetchMock.mockResponseOnce(JSON.stringify({ message: "Unauthorized" }), {
+      status: 401,
+    });
+    fetchMock.mockResponseOnce(JSON.stringify({ message: "Unauthorized" }), {
+      status: 401,
+    });
 
     const sdk = new FlagVaultSDK({
       apiKey: "test-api-key",
-      apiSecret: "test-api-secret",
     });
 
     await expect(sdk.isEnabled("test-flag-key")).rejects.toThrow(
@@ -126,12 +121,15 @@ describe("FlagVaultSDK", () => {
 
   it("should throw FlagVaultAuthenticationError for 403 responses", async () => {
     // Mock twice for two expect calls
-    fetchMock.mockResponseOnce(JSON.stringify({ message: "Forbidden" }), { status: 403 });
-    fetchMock.mockResponseOnce(JSON.stringify({ message: "Forbidden" }), { status: 403 });
+    fetchMock.mockResponseOnce(JSON.stringify({ message: "Forbidden" }), {
+      status: 403,
+    });
+    fetchMock.mockResponseOnce(JSON.stringify({ message: "Forbidden" }), {
+      status: 403,
+    });
 
     const sdk = new FlagVaultSDK({
       apiKey: "test-api-key",
-      apiSecret: "test-api-secret",
     });
 
     await expect(sdk.isEnabled("test-flag-key")).rejects.toThrow(
@@ -155,7 +153,6 @@ describe("FlagVaultSDK", () => {
 
     const sdk = new FlagVaultSDK({
       apiKey: "test-api-key",
-      apiSecret: "test-api-secret",
     });
 
     await expect(sdk.isEnabled("test-flag-key")).rejects.toThrow(
@@ -179,7 +176,6 @@ describe("FlagVaultSDK", () => {
 
     const sdk = new FlagVaultSDK({
       apiKey: "test-api-key",
-      apiSecret: "test-api-secret",
     });
 
     await expect(sdk.isEnabled("test-flag-key")).rejects.toThrow(
@@ -197,7 +193,6 @@ describe("FlagVaultSDK", () => {
 
     const sdk = new FlagVaultSDK({
       apiKey: "test-api-key",
-      apiSecret: "test-api-secret",
       timeout: 1000,
     });
 
@@ -214,7 +209,6 @@ describe("FlagVaultSDK", () => {
 
     const sdk = new FlagVaultSDK({
       apiKey: "test-api-key",
-      apiSecret: "test-api-secret",
     });
 
     await expect(sdk.isEnabled("test-flag-key")).rejects.toThrow(
@@ -230,7 +224,6 @@ describe("FlagVaultSDK", () => {
 
     const sdk = new FlagVaultSDK({
       apiKey: "test-api-key",
-      apiSecret: "test-api-secret",
     });
 
     const isEnabled = await sdk.isEnabled("test-flag-key");
@@ -240,13 +233,12 @@ describe("FlagVaultSDK", () => {
   it("should throw Error when flag_key is null or undefined", async () => {
     const sdk = new FlagVaultSDK({
       apiKey: "test-api-key",
-      apiSecret: "test-api-secret",
     });
 
-    await expect(sdk.isEnabled(null as any)).rejects.toThrow(
+    await expect(sdk.isEnabled(null as unknown as string)).rejects.toThrow(
       "flagKey is required to check if a feature is enabled.",
     );
-    await expect(sdk.isEnabled(undefined as any)).rejects.toThrow(
+    await expect(sdk.isEnabled(undefined as unknown as string)).rejects.toThrow(
       "flagKey is required to check if a feature is enabled.",
     );
   });
@@ -256,7 +248,6 @@ describe("FlagVaultSDK", () => {
 
     const sdk = new FlagVaultSDK({
       apiKey: "test-api-key",
-      apiSecret: "test-api-secret",
     });
 
     const flagKey = "test-flag_key.with$pecial@chars";
@@ -269,7 +260,6 @@ describe("FlagVaultSDK", () => {
         method: "GET",
         headers: {
           "X-API-Key": "test-api-key",
-          "X-API-Secret": "test-api-secret",
         },
       }),
     );
@@ -282,7 +272,6 @@ describe("FlagVaultSDK", () => {
 
     const sdk = new FlagVaultSDK({
       apiKey: "test-api-key",
-      apiSecret: "test-api-secret",
     });
 
     await expect(sdk.isEnabled("test-flag-key")).rejects.toThrow(
@@ -306,7 +295,6 @@ describe("FlagVaultSDK", () => {
 
     const sdk = new FlagVaultSDK({
       apiKey: "test-api-key",
-      apiSecret: "test-api-secret",
     });
 
     await expect(sdk.isEnabled("test-flag-key")).rejects.toThrow(

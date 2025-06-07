@@ -4,7 +4,7 @@
 export class FlagVaultError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'FlagVaultError';
+    this.name = "FlagVaultError";
   }
 }
 
@@ -14,7 +14,7 @@ export class FlagVaultError extends Error {
 export class FlagVaultAuthenticationError extends FlagVaultError {
   constructor(message: string) {
     super(message);
-    this.name = 'FlagVaultAuthenticationError';
+    this.name = "FlagVaultAuthenticationError";
   }
 }
 
@@ -24,7 +24,7 @@ export class FlagVaultAuthenticationError extends FlagVaultError {
 export class FlagVaultNetworkError extends FlagVaultError {
   constructor(message: string) {
     super(message);
-    this.name = 'FlagVaultNetworkError';
+    this.name = "FlagVaultNetworkError";
   }
 }
 
@@ -34,7 +34,7 @@ export class FlagVaultNetworkError extends FlagVaultError {
 export class FlagVaultAPIError extends FlagVaultError {
   constructor(message: string) {
     super(message);
-    this.name = 'FlagVaultAPIError';
+    this.name = "FlagVaultAPIError";
   }
 }
 
@@ -47,26 +47,22 @@ export interface FlagVaultSDKConfig {
   /**
    * API Key for authenticating with the FlagVault service.
    * Can be obtained from your FlagVault dashboard.
+   * Environment is automatically determined from the key prefix (live_ = production, test_ = test).
    */
   apiKey: string;
-
-  /**
-   * API Secret for authenticating with the FlagVault service.
-   * Can be obtained from your FlagVault dashboard.
-   */
-  apiSecret: string;
-
-  /**
-   * Optional base URL for the FlagVault API.
-   * Defaults to "https://api.flagvault.com".
-   */
-  baseUrl?: string;
 
   /**
    * Request timeout in milliseconds.
    * Defaults to 10000ms (10 seconds).
    */
   timeout?: number;
+
+  /**
+   * @internal
+   * Base URL for the FlagVault API.
+   * Defaults to "https://api.flagvault.com".
+   */
+  baseUrl?: string;
 }
 
 /**
@@ -90,8 +86,7 @@ export interface FlagVaultSDKConfig {
  * import FlagVaultSDK from '@flagvault/sdk';
  *
  * const sdk = new FlagVaultSDK({
- *   apiKey: 'your-api-key',
- *   apiSecret: 'your-api-secret'
+ *   apiKey: 'live_your-api-key-here'  // Use 'test_' prefix for test environment
  * });
  *
  * // Check if a feature flag is enabled
@@ -136,7 +131,6 @@ export interface FlagVaultSDKConfig {
  */
 class FlagVaultSDK {
   private apiKey: string;
-  private apiSecret: string;
   private baseUrl: string;
   private timeout: number;
 
@@ -144,17 +138,20 @@ class FlagVaultSDK {
    * Creates a new instance of the FlagVault SDK.
    *
    * @param config - Configuration options for the SDK
-   * @throws Error if apiKey or apiSecret is not provided
+   * @throws Error if apiKey is not provided
    */
   constructor(config: FlagVaultSDKConfig) {
-    const { apiKey, apiSecret, baseUrl = "https://api.flagvault.com", timeout = 10000 } = config;
+    const {
+      apiKey,
+      baseUrl = "https://api.flagvault.com",
+      timeout = 10000,
+    } = config;
 
-    if (!apiKey || !apiSecret) {
-      throw new Error("API Key and Secret are required to initialize the SDK.");
+    if (!apiKey) {
+      throw new Error("API Key is required to initialize the SDK.");
     }
 
     this.apiKey = apiKey;
-    this.apiSecret = apiSecret;
     this.baseUrl = baseUrl;
     this.timeout = timeout;
   }
@@ -174,7 +171,7 @@ class FlagVaultSDK {
       throw new Error("flagKey is required to check if a feature is enabled.");
     }
 
-    const url = `${this.baseUrl}/feature-flag/${flagKey}/enabled`;
+    const url = `${this.baseUrl}/api/feature-flag/${flagKey}/enabled`;
 
     try {
       // Create AbortController for timeout
@@ -185,7 +182,6 @@ class FlagVaultSDK {
         method: "GET",
         headers: {
           "X-API-Key": this.apiKey,
-          "X-API-Secret": this.apiSecret,
         },
         signal: controller.signal,
       });
@@ -196,7 +192,9 @@ class FlagVaultSDK {
       if (response.status === 401) {
         throw new FlagVaultAuthenticationError("Invalid API credentials");
       } else if (response.status === 403) {
-        throw new FlagVaultAuthenticationError("Access forbidden - check your API credentials");
+        throw new FlagVaultAuthenticationError(
+          "Access forbidden - check your API credentials",
+        );
       }
 
       // Handle other HTTP errors
@@ -212,7 +210,7 @@ class FlagVaultSDK {
       }
 
       // Parse successful response
-      let data: any;
+      let data: { enabled?: boolean };
       try {
         data = await response.json();
       } catch (error) {
@@ -220,14 +218,15 @@ class FlagVaultSDK {
       }
 
       return data.enabled ?? false;
-
     } catch (error) {
       if (error instanceof FlagVaultError) {
         throw error;
       }
 
-      if (error instanceof DOMException && error.name === 'AbortError') {
-        throw new FlagVaultNetworkError(`Request timed out after ${this.timeout}ms`);
+      if (error instanceof DOMException && error.name === "AbortError") {
+        throw new FlagVaultNetworkError(
+          `Request timed out after ${this.timeout}ms`,
+        );
       }
 
       if (error instanceof TypeError) {

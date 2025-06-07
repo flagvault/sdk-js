@@ -1,26 +1,35 @@
 {
   "name": "@flagvault/sdk",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Lightweight JavaScript SDK for FlagVault, enabling seamless feature flag integration and real-time flag status checks for modern web applications.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "tsc",
     "test": "jest",
     "lint": "eslint .",
-    "prepublishOnly": "npm run build"
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean",
+    "prepublishOnly": "npm run lint && npm run test && npm run build"
   },
   "keywords": [
     "feature-flag",
+    "feature-flags",
+    "feature-toggle",
+    "feature-toggles",
     "sdk",
     "javascript",
     "typescript",
-    "flagvault"
+    "flagvault",
+    "remote-config",
+    "a-b-testing",
+    "experimentation"
   ],
   "repository": {
     "type": "git",

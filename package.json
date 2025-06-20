@@ -1,7 +1,7 @@
 {
   "name": "@flagvault/sdk",
-  "version": "1.1.0",
-  "description": "Lightweight JavaScript SDK for FlagVault with graceful error handling and built-in React hooks for seamless feature flag integration.",
+  "version": "1.2.0",
+  "description": "Lightweight JavaScript SDK for FlagVault with intelligent caching, graceful error handling, and built-in React hooks for seamless feature flag integration.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -32,7 +32,9 @@
     "remote-config",
     "a-b-testing",
     "experimentation",
-    "graceful-degradation"
+    "graceful-degradation",
+    "caching",
+    "performance"
   ],
   "repository": {
     "type": "git",

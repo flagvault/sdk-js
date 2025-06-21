@@ -755,12 +755,9 @@ class FlagVaultSDK {
 
   /**
    * Evaluates a feature flag for a specific context using local rollout logic.
-   * 
-   * @param flag - The flag metadata
-   * @param context - Optional context ID for percentage rollouts (e.g., userId, sessionId)
-   * @returns Boolean indicating if the feature should be enabled
+   * @private
    */
-  evaluateFlag(flag: FeatureFlagMetadata, context?: string): boolean {
+  private evaluateFlag(flag: FeatureFlagMetadata, context?: string): boolean {
     // If flag is disabled, always return false
     if (!flag.isEnabled) {
       return false;

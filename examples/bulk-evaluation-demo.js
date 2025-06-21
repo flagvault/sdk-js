@@ -30,7 +30,7 @@ async function demonstrateBulkEvaluation() {
     }
     console.log();
 
-    // Method 3: Evaluate flags for different users
+    // Method 3: Evaluate flags for different users using isEnabled
     console.log('3. Evaluating flags for different users:');
     const users = ['user-123', 'user-456', 'user-789', 'user-abc', 'user-def'];
     
@@ -41,7 +41,7 @@ async function demonstrateBulkEvaluation() {
       console.log(`\nRollout evaluation for "${rolloutFlag.key}" (${rolloutFlag.rolloutPercentage}%):`);
       
       for (const userId of users) {
-        const enabled = sdk.evaluateFlag(rolloutFlag, userId);
+        const enabled = await sdk.isEnabled(rolloutFlag.key, false, userId);
         console.log(`- ${userId}: ${enabled ? '✓ Enabled' : '✗ Disabled'}`);
       }
       
@@ -49,7 +49,7 @@ async function demonstrateBulkEvaluation() {
       console.log('\nConsistency check - evaluating same user multiple times:');
       const testUser = 'user-999';
       for (let i = 0; i < 3; i++) {
-        const enabled = sdk.evaluateFlag(rolloutFlag, testUser);
+        const enabled = await sdk.isEnabled(rolloutFlag.key, false, testUser);
         console.log(`- Attempt ${i + 1}: ${enabled ? '✓ Enabled' : '✗ Disabled'}`);
       }
     } else {

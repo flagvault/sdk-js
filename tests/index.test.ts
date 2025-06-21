@@ -544,7 +544,7 @@ describe("FlagVaultSDK", () => {
     it("should handle unknown fallback behavior", async () => {
       const sdk = new FlagVaultSDK({
         apiKey: "test-api-key",
-        cache: { enabled: true, fallbackBehavior: "unknown" as any },
+        cache: { enabled: true, fallbackBehavior: "unknown" as "default" },
       });
 
       // Force cache miss by mocking network error
@@ -853,7 +853,7 @@ describe("FlagVaultSDK", () => {
       );
 
       const enabledCount = results.filter(Boolean).length;
-      
+
       // With 20 users and 50% rollout, we expect some to be enabled and some disabled
       // Allow for some statistical variation
       expect(enabledCount).toBeGreaterThan(0);
@@ -1112,13 +1112,13 @@ describe("FlagVaultSDK", () => {
       sdk.destroy();
     });
 
-    it("should expose all error classes", () => {
+    it("should expose all error classes", async () => {
       const {
         FlagVaultError,
         FlagVaultAuthenticationError,
         FlagVaultNetworkError,
         FlagVaultAPIError,
-      } = require("../src/index");
+      } = await import("../src/index");
 
       expect(FlagVaultError).toBeDefined();
       expect(FlagVaultAuthenticationError).toBeDefined();
@@ -1147,9 +1147,11 @@ describe("FlagVaultSDK", () => {
       sdk.destroy();
     });
 
-    it("should test React hooks export", () => {
+    it("should test React hooks export", async () => {
       // Test that the hook functions are exported
-      const { useFeatureFlag, useFeatureFlagCached } = require("../src/index");
+      const { useFeatureFlag, useFeatureFlagCached } = await import(
+        "../src/index"
+      );
 
       expect(useFeatureFlag).toBeDefined();
       expect(useFeatureFlagCached).toBeDefined();
@@ -1201,7 +1203,7 @@ describe("FlagVaultSDK", () => {
 
     it("should handle empty constructor config", () => {
       expect(() => {
-        new FlagVaultSDK({} as any);
+        new FlagVaultSDK({} as { apiKey: string });
       }).toThrow("API Key is required");
     });
 

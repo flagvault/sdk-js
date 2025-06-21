@@ -1,4 +1,4 @@
-import * as crypto from 'crypto';
+import * as crypto from "crypto";
 
 /**
  * Base exception for FlagVault SDK errors.
@@ -42,7 +42,7 @@ export class FlagVaultAPIError extends FlagVaultError {
 
 /**
  * Feature flag metadata returned from the API.
- * 
+ *
  * @group Core
  */
 export interface FeatureFlagMetadata {
@@ -96,7 +96,7 @@ export interface CacheConfig {
    * - 'throw': Throw the error
    * Defaults to 'default'.
    */
-  fallbackBehavior?: 'api' | 'default' | 'throw';
+  fallbackBehavior?: "api" | "default" | "throw";
 }
 
 /**
@@ -116,7 +116,7 @@ interface CacheEntry {
 
 /**
  * Cache statistics for monitoring and debugging.
- * 
+ *
  * @group Debugging
  */
 export interface CacheStats {
@@ -132,7 +132,7 @@ export interface CacheStats {
 
 /**
  * Debug information for a specific flag.
- * 
+ *
  * @group Debugging
  */
 export interface FlagDebugInfo {
@@ -260,7 +260,11 @@ class FlagVaultSDK {
   private cache: Map<string, CacheEntry>;
   private refreshTimer?: NodeJS.Timeout;
   private refreshInProgress: boolean = false;
-  private bulkFlagsCache?: { flags: Map<string, FeatureFlagMetadata>; cachedAt: number; expiresAt: number };
+  private bulkFlagsCache?: {
+    flags: Map<string, FeatureFlagMetadata>;
+    cachedAt: number;
+    expiresAt: number;
+  };
 
   /**
    * Creates a new instance of the FlagVault SDK.
@@ -283,14 +287,14 @@ class FlagVaultSDK {
     this.apiKey = apiKey;
     this.baseUrl = baseUrl;
     this.timeout = timeout;
-    
+
     // Initialize cache configuration with defaults
     this.cacheConfig = {
       enabled: cache.enabled ?? true,
       ttl: cache.ttl ?? 300,
       maxSize: cache.maxSize ?? 1000,
       refreshInterval: cache.refreshInterval ?? 60,
-      fallbackBehavior: cache.fallbackBehavior ?? 'default',
+      fallbackBehavior: cache.fallbackBehavior ?? "default",
     };
 
     // Initialize cache
@@ -354,13 +358,17 @@ class FlagVaultSDK {
 
     // Cache miss - fetch from API
     try {
-      const { value, shouldCache } = await this.fetchFlagFromApiWithCacheInfo(flagKey, defaultValue, context);
-      
+      const { value, shouldCache } = await this.fetchFlagFromApiWithCacheInfo(
+        flagKey,
+        defaultValue,
+        context,
+      );
+
       // Store in cache if enabled and the response was successful
       if (this.cacheConfig.enabled && shouldCache) {
         this.setCachedValue(cacheKey, value);
       }
-      
+
       return value;
     } catch (error) {
       return this.handleCacheMiss(flagKey, defaultValue, error);
@@ -371,7 +379,11 @@ class FlagVaultSDK {
    * Fetches a flag value from the API with cache information.
    * @private
    */
-  private async fetchFlagFromApiWithCacheInfo(flagKey: string, defaultValue: boolean, context?: string): Promise<{ value: boolean; shouldCache: boolean }> {
+  private async fetchFlagFromApiWithCacheInfo(
+    flagKey: string,
+    defaultValue: boolean,
+    context?: string,
+  ): Promise<{ value: boolean; shouldCache: boolean }> {
     let url = `${this.baseUrl}/api/feature-flag/${flagKey}/enabled`;
     if (context) {
       url += `?context=${encodeURIComponent(context)}`;
@@ -428,7 +440,7 @@ class FlagVaultSDK {
       }
 
       // Parse JSON response
-      let data: any;
+      let data: unknown;
       try {
         data = await response.json();
       } catch {
@@ -439,9 +451,8 @@ class FlagVaultSDK {
       }
 
       // Extract enabled value and cache successful responses
-      const enabled = data?.enabled ?? false;
+      const enabled = (data as { enabled?: boolean })?.enabled ?? false;
       return { value: enabled, shouldCache: true };
-
     } catch (error) {
       clearTimeout(timeoutId);
 
@@ -471,8 +482,16 @@ class FlagVaultSDK {
    * Fetches a flag value from the API.
    * @private
    */
-  private async fetchFlagFromApi(flagKey: string, defaultValue: boolean, context?: string): Promise<boolean> {
-    const { value } = await this.fetchFlagFromApiWithCacheInfo(flagKey, defaultValue, context);
+  private async fetchFlagFromApi(
+    flagKey: string,
+    defaultValue: boolean,
+    context?: string,
+  ): Promise<boolean> {
+    const { value } = await this.fetchFlagFromApiWithCacheInfo(
+      flagKey,
+      defaultValue,
+      context,
+    );
     return value;
   }
 
@@ -511,7 +530,7 @@ class FlagVaultSDK {
     const entry: CacheEntry = {
       value,
       cachedAt: now,
-      expiresAt: now + (this.cacheConfig.ttl * 1000),
+      expiresAt: now + this.cacheConfig.ttl * 1000,
       lastAccessed: now,
     };
 
@@ -523,7 +542,7 @@ class FlagVaultSDK {
    * @private
    */
   private evictOldestEntry(): void {
-    let oldestKey = '';
+    let oldestKey = "";
     let oldestTime = Infinity;
 
     for (const [key, entry] of this.cache.entries()) {
@@ -542,16 +561,24 @@ class FlagVaultSDK {
    * Handles cache miss scenarios based on configured fallback behavior.
    * @private
    */
-  private handleCacheMiss(flagKey: string, defaultValue: boolean, error: any): boolean {
+  private handleCacheMiss(
+    flagKey: string,
+    defaultValue: boolean,
+    error: unknown,
+  ): boolean {
     switch (this.cacheConfig.fallbackBehavior) {
-      case 'default':
-        console.warn(`FlagVault: Cache miss for '${flagKey}', using default: ${defaultValue}`);
+      case "default":
+        console.warn(
+          `FlagVault: Cache miss for '${flagKey}', using default: ${defaultValue}`,
+        );
         return defaultValue;
-      case 'throw':
+      case "throw":
         throw error;
-      case 'api':
+      case "api":
         // This would retry the API call, but for now we'll return default
-        console.warn(`FlagVault: Cache miss for '${flagKey}', using default: ${defaultValue}`);
+        console.warn(
+          `FlagVault: Cache miss for '${flagKey}', using default: ${defaultValue}`,
+        );
         return defaultValue;
       default:
         return defaultValue;
@@ -585,7 +612,8 @@ class FlagVaultSDK {
       // Only refresh flags without context (basic flag keys)
       for (const [flagKey, entry] of this.cache.entries()) {
         const timeUntilExpiry = entry.expiresAt - now;
-        if (timeUntilExpiry <= 30000 && !flagKey.includes(':')) { // 30 seconds, no context
+        if (timeUntilExpiry <= 30000 && !flagKey.includes(":")) {
+          // 30 seconds, no context
           flagsToRefresh.push(flagKey);
         }
       }
@@ -595,19 +623,23 @@ class FlagVaultSDK {
         await Promise.allSettled(
           flagsToRefresh.map(async (flagKey) => {
             try {
-              const { value, shouldCache } = await this.fetchFlagFromApiWithCacheInfo(flagKey, false);
+              const { value, shouldCache } =
+                await this.fetchFlagFromApiWithCacheInfo(flagKey, false);
               if (shouldCache) {
                 this.setCachedValue(flagKey, value);
               }
             } catch (error) {
               // Background refresh failed, but don't remove from cache
-              console.warn(`FlagVault: Background refresh failed for '${flagKey}':`, error);
+              console.warn(
+                `FlagVault: Background refresh failed for '${flagKey}':`,
+                error,
+              );
             }
-          })
+          }),
         );
       }
     } catch (error) {
-      console.warn('FlagVault: Background refresh failed:', error);
+      console.warn("FlagVault: Background refresh failed:", error);
     } finally {
       this.refreshInProgress = false;
     }
@@ -615,7 +647,7 @@ class FlagVaultSDK {
 
   /**
    * Gets cache statistics for monitoring and debugging.
-   * 
+   *
    * @returns Object containing cache statistics
    */
   getCacheStats(): CacheStats {
@@ -623,7 +655,7 @@ class FlagVaultSDK {
     let expiredCount = 0;
     const now = Date.now();
 
-    for (const [_, entry] of this.cache.entries()) {
+    for (const entry of this.cache.values()) {
       if (entry.lastAccessed > entry.cachedAt) {
         hitCount++;
       }
@@ -642,7 +674,7 @@ class FlagVaultSDK {
 
   /**
    * Gets debug information for a specific flag.
-   * 
+   *
    * @param flagKey - The flag key to debug
    * @returns Debug information about the flag
    */
@@ -676,7 +708,7 @@ class FlagVaultSDK {
     // Rough estimation: each entry has a key (string) + CacheEntry object
     // String: ~2 bytes per character, CacheEntry: ~32 bytes for numbers
     let total = 0;
-    for (const [key, _] of this.cache.entries()) {
+    for (const key of this.cache.keys()) {
       total += key.length * 2 + 32; // Rough estimate
     }
     return total;
@@ -684,7 +716,7 @@ class FlagVaultSDK {
 
   /**
    * Fetches all feature flags for the organization.
-   * 
+   *
    * @returns A promise that resolves to a map of flag keys to flag metadata
    * @throws Error on network or API errors
    */
@@ -715,7 +747,9 @@ class FlagVaultSDK {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        throw new FlagVaultAPIError(`Failed to fetch flags: ${response.status} ${response.statusText}`);
+        throw new FlagVaultAPIError(
+          `Failed to fetch flags: ${response.status} ${response.statusText}`,
+        );
       }
 
       const data = await response.json();
@@ -733,7 +767,7 @@ class FlagVaultSDK {
         this.bulkFlagsCache = {
           flags: new Map(flags),
           cachedAt: now,
-          expiresAt: now + (this.cacheConfig.ttl * 1000),
+          expiresAt: now + this.cacheConfig.ttl * 1000,
         };
       }
 
@@ -742,7 +776,9 @@ class FlagVaultSDK {
       clearTimeout(timeoutId);
 
       if (error instanceof DOMException && error.name === "AbortError") {
-        throw new FlagVaultNetworkError(`Request timed out after ${this.timeout}ms`);
+        throw new FlagVaultNetworkError(
+          `Request timed out after ${this.timeout}ms`,
+        );
       }
 
       if (error instanceof TypeError) {
@@ -769,27 +805,27 @@ class FlagVaultSDK {
     }
 
     // Use provided context or generate a random one
-    const rolloutContext = context || crypto.randomBytes(16).toString('hex');
+    const rolloutContext = context || crypto.randomBytes(16).toString("hex");
 
     // Calculate consistent hash for this context + flag combination
     const hash = crypto
-      .createHash('sha256')
+      .createHash("sha256")
       .update(`${rolloutContext}-${flag.key}-${flag.rolloutSeed}`)
       .digest();
-    
+
     // Convert first 2 bytes to a number between 0-9999 (for 0.01% precision)
     const bucket = (hash[0] * 256 + hash[1]) % 10000;
-    
+
     // Check if this context is in the rollout percentage
     const threshold = flag.rolloutPercentage * 100; // Convert percentage to 0-10000 scale
-    
+
     return bucket < threshold;
   }
 
   /**
    * Preloads all feature flags into cache.
    * Useful for applications that need to evaluate many flags quickly.
-   * 
+   *
    * @returns A promise that resolves when flags are loaded
    */
   async preloadFlags(): Promise<void> {
@@ -958,7 +994,9 @@ export function useFeatureFlagCached(
           setIsLoading(true);
 
           // Check cache first (include context in cache key)
-          const cacheKey = context ? `flagvault_${flagKey}:${context}` : `flagvault_${flagKey}`;
+          const cacheKey = context
+            ? `flagvault_${flagKey}:${context}`
+            : `flagvault_${flagKey}`;
           const cachedData = getCachedFlag(cacheKey, cacheTTL);
 
           if (cachedData !== null) {

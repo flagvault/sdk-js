@@ -1,4 +1,4 @@
-import FlagVaultSDK from "../src/index";
+import FlagVaultSDK, { FlagVaultSDKConfig } from "../src/index";
 
 // Mock fetch
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -7,15 +7,37 @@ require("jest-fetch-mock").enableMocks();
 const fetchMock = require("jest-fetch-mock");
 
 describe("FlagVaultSDK", () => {
+  let sdkInstances: FlagVaultSDK[] = [];
+
   beforeEach(() => {
     fetchMock.resetMocks(); // Reset mocks before each test
+    sdkInstances = []; // Reset SDK instances array
   });
+
+  afterEach(() => {
+    // Clean up all SDK instances to prevent hanging timers
+    sdkInstances.forEach((sdk) => {
+      try {
+        sdk.destroy();
+      } catch {
+        // Ignore errors during cleanup
+      }
+    });
+    sdkInstances = [];
+  });
+
+  // Helper function to track SDK instances
+  const createSDK = (config: unknown) => {
+    const sdk = new FlagVaultSDK(config as FlagVaultSDKConfig);
+    sdkInstances.push(sdk);
+    return sdk;
+  };
 
   it("should return default value when the fetch request fails", async () => {
     // Mock a failed fetch request
     fetchMock.mockRejectOnce(new TypeError("Failed to fetch"));
 
-    const sdk = new FlagVaultSDK({
+    const sdk = createSDK({
       apiKey: "test-api-key",
     });
 
@@ -25,7 +47,7 @@ describe("FlagVaultSDK", () => {
   });
 
   it("should initialize correctly with valid config", () => {
-    const sdk = new FlagVaultSDK({
+    const sdk = createSDK({
       apiKey: "test-api-key",
     });
 
@@ -33,7 +55,7 @@ describe("FlagVaultSDK", () => {
   });
 
   it("should initialize correctly with custom config", () => {
-    const sdk = new FlagVaultSDK({
+    const sdk = createSDK({
       apiKey: "test-api-key",
       timeout: 15000,
     });
@@ -43,7 +65,7 @@ describe("FlagVaultSDK", () => {
 
   it("should throw an error if initialized without API key or secret", () => {
     expect(() => {
-      new FlagVaultSDK({
+      createSDK({
         apiKey: "",
       });
     }).toThrow("API Key is required to initialize the SDK.");
@@ -55,7 +77,7 @@ describe("FlagVaultSDK", () => {
       status: 200,
     });
 
-    const sdk = new FlagVaultSDK({
+    const sdk = createSDK({
       apiKey: "test-api-key",
     });
 
@@ -69,7 +91,7 @@ describe("FlagVaultSDK", () => {
       status: 200,
     });
 
-    const sdk = new FlagVaultSDK({
+    const sdk = createSDK({
       apiKey: "test-api-key",
     });
 
@@ -78,7 +100,7 @@ describe("FlagVaultSDK", () => {
   });
 
   it("should throw an error if flagKey is missing", async () => {
-    const sdk = new FlagVaultSDK({
+    const sdk = createSDK({
       apiKey: "test-api-key",
     });
 
@@ -91,7 +113,7 @@ describe("FlagVaultSDK", () => {
     // Mock a 401 response (unauthorized)
     fetchMock.mockResponseOnce("", { status: 401 });
 
-    const sdk = new FlagVaultSDK({
+    const sdk = createSDK({
       apiKey: "test-api-key",
     });
 
@@ -104,7 +126,7 @@ describe("FlagVaultSDK", () => {
     // Mock a 403 response (forbidden)
     fetchMock.mockResponseOnce("", { status: 403 });
 
-    const sdk = new FlagVaultSDK({
+    const sdk = createSDK({
       apiKey: "test-api-key",
     });
 
@@ -117,7 +139,7 @@ describe("FlagVaultSDK", () => {
     // Mock a 404 response (not found)
     fetchMock.mockResponseOnce("", { status: 404 });
 
-    const sdk = new FlagVaultSDK({
+    const sdk = createSDK({
       apiKey: "test-api-key",
     });
 
@@ -133,7 +155,7 @@ describe("FlagVaultSDK", () => {
       { status: 500 },
     );
 
-    const sdk = new FlagVaultSDK({
+    const sdk = createSDK({
       apiKey: "test-api-key",
     });
 
@@ -146,7 +168,7 @@ describe("FlagVaultSDK", () => {
     // Mock a 500 response with invalid JSON
     fetchMock.mockResponseOnce("Invalid JSON", { status: 500 });
 
-    const sdk = new FlagVaultSDK({
+    const sdk = createSDK({
       apiKey: "test-api-key",
     });
 
@@ -159,7 +181,7 @@ describe("FlagVaultSDK", () => {
     // Mock an AbortError to simulate timeout
     fetchMock.mockRejectOnce(new DOMException("Aborted", "AbortError"));
 
-    const sdk = new FlagVaultSDK({
+    const sdk = createSDK({
       apiKey: "test-api-key",
       timeout: 1000,
     });
@@ -173,7 +195,7 @@ describe("FlagVaultSDK", () => {
     // Mock a successful response with invalid JSON
     fetchMock.mockResponseOnce("Invalid JSON", { status: 200 });
 
-    const sdk = new FlagVaultSDK({
+    const sdk = createSDK({
       apiKey: "test-api-key",
     });
 
@@ -186,7 +208,7 @@ describe("FlagVaultSDK", () => {
     // Mock a successful response without the enabled field
     fetchMock.mockResponseOnce(JSON.stringify({}), { status: 200 });
 
-    const sdk = new FlagVaultSDK({
+    const sdk = createSDK({
       apiKey: "test-api-key",
     });
 
@@ -195,7 +217,7 @@ describe("FlagVaultSDK", () => {
   });
 
   it("should throw Error when flag_key is null or undefined", async () => {
-    const sdk = new FlagVaultSDK({
+    const sdk = createSDK({
       apiKey: "test-api-key",
     });
 
@@ -215,7 +237,7 @@ describe("FlagVaultSDK", () => {
       status: 200,
     });
 
-    const sdk = new FlagVaultSDK({
+    const sdk = createSDK({
       apiKey: "test-api-key",
     });
 
@@ -227,7 +249,7 @@ describe("FlagVaultSDK", () => {
     // Mock a generic error
     fetchMock.mockRejectOnce(new Error("Generic network error"));
 
-    const sdk = new FlagVaultSDK({
+    const sdk = createSDK({
       apiKey: "test-api-key",
     });
 
@@ -243,7 +265,7 @@ describe("FlagVaultSDK", () => {
       statusText: "Internal Server Error",
     });
 
-    const sdk = new FlagVaultSDK({
+    const sdk = createSDK({
       apiKey: "test-api-key",
     });
 
@@ -256,7 +278,7 @@ describe("FlagVaultSDK", () => {
   it("should use provided default value on errors", async () => {
     fetchMock.mockRejectOnce(new TypeError("Failed to fetch"));
 
-    const sdk = new FlagVaultSDK({
+    const sdk = createSDK({
       apiKey: "test-api-key",
     });
 
@@ -269,7 +291,7 @@ describe("FlagVaultSDK", () => {
   it("should respect default value when enabled field is missing but still use response", async () => {
     fetchMock.mockResponseOnce(JSON.stringify({}), { status: 200 });
 
-    const sdk = new FlagVaultSDK({
+    const sdk = createSDK({
       apiKey: "test-api-key",
     });
 
@@ -288,7 +310,7 @@ describe("FlagVaultSDK", () => {
         status: 200,
       });
 
-      const sdk = new FlagVaultSDK({
+      const sdk = createSDK({
         apiKey: "test-api-key",
         cache: { enabled: true, ttl: 300 },
       });
@@ -302,8 +324,6 @@ describe("FlagVaultSDK", () => {
       const result2 = await sdk.isEnabled("test-flag");
       expect(result2).toBe(true);
       expect(fetchMock).toHaveBeenCalledTimes(1); // No additional call
-
-      sdk.destroy();
     });
 
     it("should not cache error responses", async () => {
@@ -312,7 +332,7 @@ describe("FlagVaultSDK", () => {
         status: 200,
       });
 
-      const sdk = new FlagVaultSDK({
+      const sdk = createSDK({
         apiKey: "test-api-key",
         cache: { enabled: true },
       });
@@ -325,8 +345,6 @@ describe("FlagVaultSDK", () => {
       const result2 = await sdk.isEnabled("test-flag");
       expect(result2).toBe(true);
       expect(fetchMock).toHaveBeenCalledTimes(2);
-
-      sdk.destroy();
     });
 
     it("should respect cache TTL", async () => {
@@ -334,7 +352,7 @@ describe("FlagVaultSDK", () => {
         status: 200,
       });
 
-      const sdk = new FlagVaultSDK({
+      const sdk = createSDK({
         apiKey: "test-api-key",
         cache: { enabled: true, ttl: 0.1 }, // 100ms TTL
       });
@@ -354,8 +372,6 @@ describe("FlagVaultSDK", () => {
       const result = await sdk.isEnabled("test-flag");
       expect(result).toBe(false);
       expect(fetchMock).toHaveBeenCalledTimes(2);
-
-      sdk.destroy();
     });
 
     it("should provide cache statistics", async () => {
@@ -363,7 +379,7 @@ describe("FlagVaultSDK", () => {
         status: 200,
       });
 
-      const sdk = new FlagVaultSDK({
+      const sdk = createSDK({
         apiKey: "test-api-key",
         cache: { enabled: true },
       });
@@ -378,8 +394,6 @@ describe("FlagVaultSDK", () => {
       expect(stats.hitRate).toBeGreaterThanOrEqual(0); // Can be 0 on first access
       expect(stats.memoryUsage).toBeGreaterThan(0);
       expect(stats.expiredEntries).toBe(0);
-
-      sdk.destroy();
     });
 
     it("should provide debug information for flags", async () => {
@@ -387,7 +401,7 @@ describe("FlagVaultSDK", () => {
         status: 200,
       });
 
-      const sdk = new FlagVaultSDK({
+      const sdk = createSDK({
         apiKey: "test-api-key",
         cache: { enabled: true },
       });
@@ -407,8 +421,6 @@ describe("FlagVaultSDK", () => {
       const debugInfo2 = sdk.debugFlag("non-cached");
       expect(debugInfo2.cached).toBe(false);
       expect(debugInfo2.value).toBeUndefined();
-
-      sdk.destroy();
     });
 
     it("should clear cache", async () => {
@@ -416,7 +428,7 @@ describe("FlagVaultSDK", () => {
         status: 200,
       });
 
-      const sdk = new FlagVaultSDK({
+      const sdk = createSDK({
         apiKey: "test-api-key",
         cache: { enabled: true },
       });
@@ -428,8 +440,6 @@ describe("FlagVaultSDK", () => {
       // Clear cache
       sdk.clearCache();
       expect(sdk.getCacheStats().size).toBe(0);
-
-      sdk.destroy();
     });
 
     it("should handle context in cache keys", async () => {
@@ -437,7 +447,7 @@ describe("FlagVaultSDK", () => {
         .mockResponseOnce(JSON.stringify({ enabled: true }), { status: 200 })
         .mockResponseOnce(JSON.stringify({ enabled: false }), { status: 200 });
 
-      const sdk = new FlagVaultSDK({
+      const sdk = createSDK({
         apiKey: "test-api-key",
         cache: { enabled: true },
       });
@@ -451,8 +461,6 @@ describe("FlagVaultSDK", () => {
       // Same context should use cache
       await sdk.isEnabled("test-flag", false, "user-1");
       expect(fetchMock).toHaveBeenCalledTimes(2);
-
-      sdk.destroy();
     });
 
     it("should disable caching when configured", async () => {
@@ -460,7 +468,7 @@ describe("FlagVaultSDK", () => {
         .mockResponseOnce(JSON.stringify({ enabled: true }), { status: 200 })
         .mockResponseOnce(JSON.stringify({ enabled: true }), { status: 200 });
 
-      const sdk = new FlagVaultSDK({
+      const sdk = createSDK({
         apiKey: "test-api-key",
         cache: { enabled: false },
       });
@@ -470,12 +478,10 @@ describe("FlagVaultSDK", () => {
       await sdk.isEnabled("test-flag");
 
       expect(fetchMock).toHaveBeenCalledTimes(2);
-
-      sdk.destroy();
     });
 
     it("should evict oldest entries when cache is full", async () => {
-      const sdk = new FlagVaultSDK({
+      const sdk = createSDK({
         apiKey: "test-api-key",
         cache: { enabled: true, maxSize: 2 },
       });
@@ -494,12 +500,10 @@ describe("FlagVaultSDK", () => {
       // Add third flag should evict oldest
       await sdk.isEnabled("flag3");
       expect(sdk.getCacheStats().size).toBe(2);
-
-      sdk.destroy();
     });
 
     it("should handle fallback behavior on cache miss", async () => {
-      const sdk = new FlagVaultSDK({
+      const sdk = createSDK({
         apiKey: "test-api-key",
         cache: { enabled: true, fallbackBehavior: "default" },
       });
@@ -509,12 +513,10 @@ describe("FlagVaultSDK", () => {
 
       const result = await sdk.isEnabled("test-flag", true);
       expect(result).toBe(true); // Should return default value
-
-      sdk.destroy();
     });
 
     it("should handle different cache fallback behaviors", async () => {
-      const sdk = new FlagVaultSDK({
+      const sdk = createSDK({
         apiKey: "test-api-key",
         cache: { enabled: true, fallbackBehavior: "default" },
       });
@@ -522,12 +524,10 @@ describe("FlagVaultSDK", () => {
       // Since the fallback behavior is tested implicitly in error cases,
       // this test just verifies the configuration is accepted
       expect(sdk).toBeInstanceOf(FlagVaultSDK);
-
-      sdk.destroy();
     });
 
     it("should handle api fallback behavior", async () => {
-      const sdk = new FlagVaultSDK({
+      const sdk = createSDK({
         apiKey: "test-api-key",
         cache: { enabled: true, fallbackBehavior: "api" },
       });
@@ -537,12 +537,10 @@ describe("FlagVaultSDK", () => {
 
       const result = await sdk.isEnabled("test-flag", true);
       expect(result).toBe(true); // Should return default value for now
-
-      sdk.destroy();
     });
 
     it("should handle unknown fallback behavior", async () => {
-      const sdk = new FlagVaultSDK({
+      const sdk = createSDK({
         apiKey: "test-api-key",
         cache: { enabled: true, fallbackBehavior: "unknown" as "default" },
       });
@@ -552,8 +550,6 @@ describe("FlagVaultSDK", () => {
 
       const result = await sdk.isEnabled("test-flag", true);
       expect(result).toBe(true); // Should return default value
-
-      sdk.destroy();
     });
   });
 
@@ -585,14 +581,12 @@ describe("FlagVaultSDK", () => {
 
       fetchMock.mockResponseOnce(JSON.stringify(mockFlags), { status: 200 });
 
-      const sdk = new FlagVaultSDK({ apiKey: "test-api-key" });
+      const sdk = createSDK({ apiKey: "test-api-key" });
 
       const flags = await sdk.getAllFlags();
       expect(flags.size).toBe(2);
       expect(flags.get("flag1")).toEqual(mockFlags.flags[0]);
       expect(flags.get("flag2")).toEqual(mockFlags.flags[1]);
-
-      sdk.destroy();
     });
 
     it("should handle empty flags response", async () => {
@@ -600,12 +594,10 @@ describe("FlagVaultSDK", () => {
         status: 200,
       });
 
-      const sdk = new FlagVaultSDK({ apiKey: "test-api-key" });
+      const sdk = createSDK({ apiKey: "test-api-key" });
 
       const flags = await sdk.getAllFlags();
       expect(flags.size).toBe(0);
-
-      sdk.destroy();
     });
 
     it("should handle malformed flags response", async () => {
@@ -613,44 +605,36 @@ describe("FlagVaultSDK", () => {
         status: 200,
       });
 
-      const sdk = new FlagVaultSDK({ apiKey: "test-api-key" });
+      const sdk = createSDK({ apiKey: "test-api-key" });
 
       const flags = await sdk.getAllFlags();
       expect(flags.size).toBe(0);
-
-      sdk.destroy();
     });
 
     it("should throw on getAllFlags API errors", async () => {
       fetchMock.mockResponseOnce("", { status: 500 });
 
-      const sdk = new FlagVaultSDK({ apiKey: "test-api-key" });
+      const sdk = createSDK({ apiKey: "test-api-key" });
 
       await expect(sdk.getAllFlags()).rejects.toThrow("Failed to fetch flags");
-
-      sdk.destroy();
     });
 
     it("should throw on getAllFlags network timeout", async () => {
       fetchMock.mockRejectOnce(new DOMException("Aborted", "AbortError"));
 
-      const sdk = new FlagVaultSDK({ apiKey: "test-api-key", timeout: 1000 });
+      const sdk = createSDK({ apiKey: "test-api-key", timeout: 1000 });
 
       await expect(sdk.getAllFlags()).rejects.toThrow("Request timed out");
-
-      sdk.destroy();
     });
 
     it("should throw on getAllFlags network error", async () => {
       fetchMock.mockRejectOnce(new TypeError("Failed to fetch"));
 
-      const sdk = new FlagVaultSDK({ apiKey: "test-api-key" });
+      const sdk = createSDK({ apiKey: "test-api-key" });
 
       await expect(sdk.getAllFlags()).rejects.toThrow(
         "Failed to connect to API",
       );
-
-      sdk.destroy();
     });
 
     it("should cache bulk flags response", async () => {
@@ -668,7 +652,7 @@ describe("FlagVaultSDK", () => {
 
       fetchMock.mockResponseOnce(JSON.stringify(mockFlags), { status: 200 });
 
-      const sdk = new FlagVaultSDK({
+      const sdk = createSDK({
         apiKey: "test-api-key",
         cache: { enabled: true },
       });
@@ -680,8 +664,6 @@ describe("FlagVaultSDK", () => {
       // Second call should use cache
       await sdk.getAllFlags();
       expect(fetchMock).toHaveBeenCalledTimes(1);
-
-      sdk.destroy();
     });
 
     it("should preload flags", async () => {
@@ -699,12 +681,10 @@ describe("FlagVaultSDK", () => {
 
       fetchMock.mockResponseOnce(JSON.stringify(mockFlags), { status: 200 });
 
-      const sdk = new FlagVaultSDK({ apiKey: "test-api-key" });
+      const sdk = createSDK({ apiKey: "test-api-key" });
 
       await sdk.preloadFlags();
       expect(fetchMock).toHaveBeenCalledTimes(1);
-
-      sdk.destroy();
     });
 
     it("should use bulk cache for isEnabled calls", async () => {
@@ -722,7 +702,7 @@ describe("FlagVaultSDK", () => {
 
       fetchMock.mockResponseOnce(JSON.stringify(mockFlags), { status: 200 });
 
-      const sdk = new FlagVaultSDK({
+      const sdk = createSDK({
         apiKey: "test-api-key",
         cache: { enabled: true },
       });
@@ -734,8 +714,6 @@ describe("FlagVaultSDK", () => {
       const result = await sdk.isEnabled("flag1");
       expect(result).toBe(true);
       expect(fetchMock).toHaveBeenCalledTimes(1); // Only the preload call
-
-      sdk.destroy();
     });
   });
 
@@ -760,15 +738,13 @@ describe("FlagVaultSDK", () => {
 
       fetchMock.mockResponseOnce(JSON.stringify(mockFlags), { status: 200 });
 
-      const sdk = new FlagVaultSDK({ apiKey: "test-api-key" });
+      const sdk = createSDK({ apiKey: "test-api-key" });
 
       await sdk.preloadFlags();
 
       // Should return flag's enabled state directly
       const result = await sdk.isEnabled("simple-flag", false, "user-123");
       expect(result).toBe(true);
-
-      sdk.destroy();
     });
 
     it("should handle disabled flags with rollout", async () => {
@@ -786,15 +762,13 @@ describe("FlagVaultSDK", () => {
 
       fetchMock.mockResponseOnce(JSON.stringify(mockFlags), { status: 200 });
 
-      const sdk = new FlagVaultSDK({ apiKey: "test-api-key" });
+      const sdk = createSDK({ apiKey: "test-api-key" });
 
       await sdk.preloadFlags();
 
       // Should return false even with 100% rollout because flag is disabled
       const result = await sdk.isEnabled("disabled-flag", false, "user-123");
       expect(result).toBe(false);
-
-      sdk.destroy();
     });
 
     it("should evaluate rollout percentage deterministically", async () => {
@@ -812,7 +786,7 @@ describe("FlagVaultSDK", () => {
 
       fetchMock.mockResponseOnce(JSON.stringify(mockFlags), { status: 200 });
 
-      const sdk = new FlagVaultSDK({ apiKey: "test-api-key" });
+      const sdk = createSDK({ apiKey: "test-api-key" });
 
       await sdk.preloadFlags();
 
@@ -823,8 +797,6 @@ describe("FlagVaultSDK", () => {
 
       expect(result1).toBe(result2);
       expect(result2).toBe(result3);
-
-      sdk.destroy();
     });
 
     it("should evaluate different users differently", async () => {
@@ -842,7 +814,7 @@ describe("FlagVaultSDK", () => {
 
       fetchMock.mockResponseOnce(JSON.stringify(mockFlags), { status: 200 });
 
-      const sdk = new FlagVaultSDK({ apiKey: "test-api-key" });
+      const sdk = createSDK({ apiKey: "test-api-key" });
 
       await sdk.preloadFlags();
 
@@ -858,8 +830,6 @@ describe("FlagVaultSDK", () => {
       // Allow for some statistical variation
       expect(enabledCount).toBeGreaterThan(0);
       expect(enabledCount).toBeLessThan(20);
-
-      sdk.destroy();
     });
 
     it("should handle 0% rollout", async () => {
@@ -877,7 +847,7 @@ describe("FlagVaultSDK", () => {
 
       fetchMock.mockResponseOnce(JSON.stringify(mockFlags), { status: 200 });
 
-      const sdk = new FlagVaultSDK({ apiKey: "test-api-key" });
+      const sdk = createSDK({ apiKey: "test-api-key" });
 
       await sdk.preloadFlags();
 
@@ -889,8 +859,6 @@ describe("FlagVaultSDK", () => {
       expect(result1).toBe(false);
       expect(result2).toBe(false);
       expect(result3).toBe(false);
-
-      sdk.destroy();
     });
 
     it("should handle 100% rollout", async () => {
@@ -908,7 +876,7 @@ describe("FlagVaultSDK", () => {
 
       fetchMock.mockResponseOnce(JSON.stringify(mockFlags), { status: 200 });
 
-      const sdk = new FlagVaultSDK({ apiKey: "test-api-key" });
+      const sdk = createSDK({ apiKey: "test-api-key" });
 
       await sdk.preloadFlags();
 
@@ -920,8 +888,6 @@ describe("FlagVaultSDK", () => {
       expect(result1).toBe(true);
       expect(result2).toBe(true);
       expect(result3).toBe(true);
-
-      sdk.destroy();
     });
 
     it("should handle missing rollout seed", async () => {
@@ -939,15 +905,13 @@ describe("FlagVaultSDK", () => {
 
       fetchMock.mockResponseOnce(JSON.stringify(mockFlags), { status: 200 });
 
-      const sdk = new FlagVaultSDK({ apiKey: "test-api-key" });
+      const sdk = createSDK({ apiKey: "test-api-key" });
 
       await sdk.preloadFlags();
 
       // Should fall back to flag's enabled state when seed is missing
       const result = await sdk.isEnabled("no-seed-flag", false, "user-123");
       expect(result).toBe(true);
-
-      sdk.destroy();
     });
 
     it("should use context parameter in API calls", async () => {
@@ -955,7 +919,7 @@ describe("FlagVaultSDK", () => {
         status: 200,
       });
 
-      const sdk = new FlagVaultSDK({ apiKey: "test-api-key" });
+      const sdk = createSDK({ apiKey: "test-api-key" });
 
       await sdk.isEnabled("test-flag", false, "user-123");
 
@@ -964,8 +928,6 @@ describe("FlagVaultSDK", () => {
         expect.stringContaining("context=user-123"),
         expect.any(Object),
       );
-
-      sdk.destroy();
     });
 
     it("should not include context parameter when not provided", async () => {
@@ -973,7 +935,7 @@ describe("FlagVaultSDK", () => {
         status: 200,
       });
 
-      const sdk = new FlagVaultSDK({ apiKey: "test-api-key" });
+      const sdk = createSDK({ apiKey: "test-api-key" });
 
       await sdk.isEnabled("test-flag", false);
 
@@ -982,8 +944,6 @@ describe("FlagVaultSDK", () => {
         expect.not.stringContaining("context="),
         expect.any(Object),
       );
-
-      sdk.destroy();
     });
   });
 
@@ -994,12 +954,10 @@ describe("FlagVaultSDK", () => {
     });
 
     it("should cleanup timers on destroy", async () => {
-      const sdk = new FlagVaultSDK({
+      const sdk = createSDK({
         apiKey: "test-api-key",
         cache: { enabled: true, refreshInterval: 60 },
       });
-
-      sdk.destroy();
 
       // Should not throw after destroy
       expect(() => sdk.destroy()).not.toThrow();
@@ -1010,7 +968,7 @@ describe("FlagVaultSDK", () => {
         status: 200,
       });
 
-      const sdk = new FlagVaultSDK({
+      const sdk = createSDK({
         apiKey: "test-api-key",
         cache: { enabled: true },
       });
@@ -1046,7 +1004,7 @@ describe("FlagVaultSDK", () => {
 
       fetchMock.mockResponseOnce(JSON.stringify(mockFlags), { status: 200 });
 
-      const sdk = new FlagVaultSDK({
+      const sdk = createSDK({
         apiKey: "test-api-key",
         cache: { enabled: true },
       });
@@ -1061,8 +1019,6 @@ describe("FlagVaultSDK", () => {
 
       const result = await sdk.isEnabled("missing-flag");
       expect(result).toBe(false);
-
-      sdk.destroy();
     });
 
     it("should handle cache disabled", async () => {
@@ -1070,7 +1026,7 @@ describe("FlagVaultSDK", () => {
         .mockResponseOnce(JSON.stringify({ enabled: true }), { status: 200 })
         .mockResponseOnce(JSON.stringify({ enabled: false }), { status: 200 });
 
-      const sdk = new FlagVaultSDK({
+      const sdk = createSDK({
         apiKey: "test-api-key",
         cache: { enabled: false },
       });
@@ -1082,8 +1038,6 @@ describe("FlagVaultSDK", () => {
       expect(result1).toBe(true);
       expect(result2).toBe(false);
       expect(fetchMock).toHaveBeenCalledTimes(2);
-
-      sdk.destroy();
     });
 
     it("should handle randomBytes for rollout without context", async () => {
@@ -1101,15 +1055,13 @@ describe("FlagVaultSDK", () => {
 
       fetchMock.mockResponseOnce(JSON.stringify(mockFlags), { status: 200 });
 
-      const sdk = new FlagVaultSDK({ apiKey: "test-api-key" });
+      const sdk = createSDK({ apiKey: "test-api-key" });
 
       await sdk.preloadFlags();
 
       // Call without context - should use randomBytes
       const result = await sdk.isEnabled("rollout-flag");
       expect(typeof result).toBe("boolean");
-
-      sdk.destroy();
     });
 
     it("should expose all error classes", async () => {
@@ -1136,15 +1088,13 @@ describe("FlagVaultSDK", () => {
         status: 200,
       });
 
-      const sdk = new FlagVaultSDK({
+      const sdk = createSDK({
         apiKey: "test-api-key",
         cache: { enabled: false }, // Disable cache to force API calls
       });
 
       const result = await sdk.isEnabled("test-flag");
       expect(result).toBe(true);
-
-      sdk.destroy();
     });
 
     it("should test React hooks export", async () => {
@@ -1166,14 +1116,12 @@ describe("FlagVaultSDK", () => {
         statusText: "",
       });
 
-      const sdk = new FlagVaultSDK({
+      const sdk = createSDK({
         apiKey: "test-api-key",
       });
 
       const result = await sdk.isEnabled("test-flag", true);
       expect(result).toBe(true); // Should return default
-
-      sdk.destroy();
     });
   });
 
@@ -1184,7 +1132,7 @@ describe("FlagVaultSDK", () => {
     });
 
     it("should handle constructor with all config options", () => {
-      const sdk = new FlagVaultSDK({
+      const sdk = createSDK({
         apiKey: "test-api-key",
         baseUrl: "https://custom-api.example.com",
         timeout: 5000,
@@ -1198,17 +1146,16 @@ describe("FlagVaultSDK", () => {
       });
 
       expect(sdk).toBeInstanceOf(FlagVaultSDK);
-      sdk.destroy();
     });
 
     it("should handle empty constructor config", () => {
       expect(() => {
-        new FlagVaultSDK({} as { apiKey: string });
+        createSDK({} as { apiKey: string });
       }).toThrow("API Key is required");
     });
 
     it("should handle undefined config properties", () => {
-      const sdk = new FlagVaultSDK({
+      const sdk = createSDK({
         apiKey: "test-api-key",
         baseUrl: undefined,
         timeout: undefined,
@@ -1216,7 +1163,6 @@ describe("FlagVaultSDK", () => {
       });
 
       expect(sdk).toBeInstanceOf(FlagVaultSDK);
-      sdk.destroy();
     });
 
     it("should handle memory usage estimation", async () => {
@@ -1224,7 +1170,7 @@ describe("FlagVaultSDK", () => {
         status: 200,
       });
 
-      const sdk = new FlagVaultSDK({
+      const sdk = createSDK({
         apiKey: "test-api-key",
         cache: { enabled: true },
       });
@@ -1234,12 +1180,10 @@ describe("FlagVaultSDK", () => {
 
       const stats = sdk.getCacheStats();
       expect(stats.memoryUsage).toBeGreaterThan(0);
-
-      sdk.destroy();
     });
 
     it("should handle cache with expired entries", async () => {
-      const sdk = new FlagVaultSDK({
+      const sdk = createSDK({
         apiKey: "test-api-key",
         cache: { enabled: true, ttl: 0.01 }, // 10ms TTL
       });
@@ -1256,18 +1200,14 @@ describe("FlagVaultSDK", () => {
 
       const stats = sdk.getCacheStats();
       expect(stats.expiredEntries).toBeGreaterThan(0);
-
-      sdk.destroy();
     });
 
     it("should handle getAllFlags with invalid JSON", async () => {
       fetchMock.mockResponseOnce("Invalid JSON", { status: 200 });
 
-      const sdk = new FlagVaultSDK({ apiKey: "test-api-key" });
+      const sdk = createSDK({ apiKey: "test-api-key" });
 
       await expect(sdk.getAllFlags()).rejects.toThrow();
-
-      sdk.destroy();
     });
 
     it("should handle context encoding in URLs", async () => {
@@ -1275,7 +1215,7 @@ describe("FlagVaultSDK", () => {
         status: 200,
       });
 
-      const sdk = new FlagVaultSDK({ apiKey: "test-api-key" });
+      const sdk = createSDK({ apiKey: "test-api-key" });
 
       // Use context with special characters that need encoding
       await sdk.isEnabled("test-flag", false, "user@example.com");
@@ -1284,8 +1224,6 @@ describe("FlagVaultSDK", () => {
         expect.stringContaining("context=user%40example.com"),
         expect.any(Object),
       );
-
-      sdk.destroy();
     });
 
     it("should handle bulk cache expiry", async () => {
@@ -1303,7 +1241,7 @@ describe("FlagVaultSDK", () => {
 
       fetchMock.mockResponseOnce(JSON.stringify(mockFlags), { status: 200 });
 
-      const sdk = new FlagVaultSDK({
+      const sdk = createSDK({
         apiKey: "test-api-key",
         cache: { enabled: true, ttl: 0.01 }, // 10ms TTL
       });
@@ -1323,8 +1261,6 @@ describe("FlagVaultSDK", () => {
       const result = await sdk.isEnabled("flag1");
       expect(result).toBe(false);
       expect(fetchMock).toHaveBeenCalledTimes(2);
-
-      sdk.destroy();
     });
   });
 });

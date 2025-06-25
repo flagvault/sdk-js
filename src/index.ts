@@ -324,16 +324,52 @@ class FlagVaultSDK {
    * @param flagKey - The key for the feature flag
    * @param defaultValue - Default value to return on error (defaults to false)
    * @param context - Optional context ID for percentage rollouts (e.g., userId, sessionId)
+   * @deprecated The context parameter is deprecated. Use targetId instead.
    * @returns A promise that resolves to a boolean indicating if the feature is enabled
    * @throws Error if flagKey is not provided
    */
   async isEnabled(
     flagKey: string,
-    defaultValue: boolean = false,
+    defaultValue?: boolean,
     context?: string,
+  ): Promise<boolean>;
+
+  /**
+   * Checks if a feature flag is enabled.
+   *
+   * @param flagKey - The key for the feature flag
+   * @param defaultValue - Default value to return on error (defaults to false)
+   * @param options - Optional configuration object
+   * @param options.targetId - Target identifier for percentage rollouts (e.g., userId, sessionId)
+   * @returns A promise that resolves to a boolean indicating if the feature is enabled
+   * @throws Error if flagKey is not provided
+   */
+  async isEnabled(
+    flagKey: string,
+    defaultValue?: boolean,
+    options?: { targetId?: string },
+  ): Promise<boolean>;
+
+  async isEnabled(
+    flagKey: string,
+    defaultValue: boolean = false,
+    contextOrOptions?: string | { targetId?: string },
   ): Promise<boolean> {
     if (!flagKey) {
       throw new Error("flagKey is required to check if a feature is enabled.");
+    }
+
+    // Extract targetId from parameters
+    let targetId: string | undefined;
+    if (typeof contextOrOptions === "string") {
+      // Legacy context parameter
+      targetId = contextOrOptions;
+      console.warn(
+        "FlagVault: The context parameter is deprecated. Please use { targetId } instead.",
+      );
+    } else if (contextOrOptions && typeof contextOrOptions === "object") {
+      // New options format
+      targetId = contextOrOptions.targetId;
     }
 
     // Check bulk cache first if available
@@ -342,13 +378,13 @@ class FlagVaultSDK {
       if (now < this.bulkFlagsCache.expiresAt) {
         const flag = this.bulkFlagsCache.flags.get(flagKey);
         if (flag) {
-          return this.evaluateFlag(flag, context);
+          return this.evaluateFlag(flag, targetId);
         }
       }
     }
 
-    // Check individual cache if enabled (include context in cache key)
-    const cacheKey = context ? `${flagKey}:${context}` : flagKey;
+    // Check individual cache if enabled (include targetId in cache key)
+    const cacheKey = targetId ? `${flagKey}:${targetId}` : flagKey;
     if (this.cacheConfig.enabled) {
       const cachedValue = this.getCachedValue(cacheKey);
       if (cachedValue !== null) {
@@ -361,7 +397,7 @@ class FlagVaultSDK {
       const { value, shouldCache } = await this.fetchFlagFromApiWithCacheInfo(
         flagKey,
         defaultValue,
-        context,
+        targetId,
       );
 
       // Store in cache if enabled and the response was successful
@@ -382,11 +418,11 @@ class FlagVaultSDK {
   private async fetchFlagFromApiWithCacheInfo(
     flagKey: string,
     defaultValue: boolean,
-    context?: string,
+    targetId?: string,
   ): Promise<{ value: boolean; shouldCache: boolean }> {
     let url = `${this.baseUrl}/api/feature-flag/${flagKey}/enabled`;
-    if (context) {
-      url += `?context=${encodeURIComponent(context)}`;
+    if (targetId) {
+      url += `?targetId=${encodeURIComponent(targetId)}`;
     }
 
     // Create AbortController for timeout
@@ -485,12 +521,12 @@ class FlagVaultSDK {
   private async fetchFlagFromApi(
     flagKey: string,
     defaultValue: boolean,
-    context?: string,
+    targetId?: string,
   ): Promise<boolean> {
     const { value } = await this.fetchFlagFromApiWithCacheInfo(
       flagKey,
       defaultValue,
-      context,
+      targetId,
     );
     return value;
   }
@@ -793,7 +829,7 @@ class FlagVaultSDK {
    * Evaluates a feature flag for a specific context using local rollout logic.
    * @private
    */
-  private evaluateFlag(flag: FeatureFlagMetadata, context?: string): boolean {
+  private evaluateFlag(flag: FeatureFlagMetadata, targetId?: string): boolean {
     // If flag is disabled, always return false
     if (!flag.isEnabled) {
       return false;
@@ -804,19 +840,19 @@ class FlagVaultSDK {
       return flag.isEnabled;
     }
 
-    // Use provided context or generate a random one
-    const rolloutContext = context || crypto.randomBytes(16).toString("hex");
+    // Use provided targetId or generate a random one
+    const rolloutTargetId = targetId || crypto.randomBytes(16).toString("hex");
 
-    // Calculate consistent hash for this context + flag combination
+    // Calculate consistent hash for this targetId + flag combination
     const hash = crypto
       .createHash("sha256")
-      .update(`${rolloutContext}-${flag.key}-${flag.rolloutSeed}`)
+      .update(`${rolloutTargetId}-${flag.key}-${flag.rolloutSeed}`)
       .digest();
 
     // Convert first 2 bytes to a number between 0-9999 (for 0.01% precision)
     const bucket = (hash[0] * 256 + hash[1]) % 10000;
 
-    // Check if this context is in the rollout percentage
+    // Check if this targetId is in the rollout percentage
     const threshold = flag.rolloutPercentage * 100; // Convert percentage to 0-10000 scale
 
     return bucket < threshold;
@@ -857,7 +893,7 @@ export interface UseFeatureFlagReturn {
  * @param sdk - FlagVault SDK instance
  * @param flagKey - The feature flag key to check
  * @param defaultValue - Default value to use if flag cannot be loaded
- * @param context - Optional context ID for percentage rollouts (e.g., userId, sessionId)
+ * @param targetId - Optional target identifier for percentage rollouts (e.g., userId, sessionId)
  * @returns Object containing isEnabled, isLoading, and error states
  *
  * @example
@@ -882,7 +918,7 @@ export function useFeatureFlag(
   sdk: FlagVaultSDK,
   flagKey: string,
   defaultValue: boolean = false,
-  context?: string,
+  targetId?: string,
 ): UseFeatureFlagReturn {
   // Note: This requires React to be installed as a peer dependency
   // We use a try/catch to gracefully handle cases where React is not available
@@ -902,7 +938,9 @@ export function useFeatureFlag(
       async function checkFlag() {
         try {
           setIsLoading(true);
-          const enabled = await sdk.isEnabled(flagKey, defaultValue, context);
+          const enabled = await sdk.isEnabled(flagKey, defaultValue, {
+            targetId,
+          });
 
           if (isMounted) {
             setIsEnabled(enabled);
@@ -927,7 +965,7 @@ export function useFeatureFlag(
       return () => {
         isMounted = false;
       };
-    }, [sdk, flagKey, defaultValue, context]);
+    }, [sdk, flagKey, defaultValue, targetId]);
 
     return { isEnabled, isLoading, error };
   } catch {
@@ -946,7 +984,7 @@ export function useFeatureFlag(
  * @param flagKey - The feature flag key to check
  * @param defaultValue - Default value to use if flag cannot be loaded
  * @param cacheTTL - Cache time-to-live in milliseconds (default: 5 minutes)
- * @param context - Optional context ID for percentage rollouts (e.g., userId, sessionId)
+ * @param targetId - Optional target identifier for percentage rollouts (e.g., userId, sessionId)
  * @returns Object containing isEnabled, isLoading, and error states
  *
  * @example
@@ -975,7 +1013,7 @@ export function useFeatureFlagCached(
   flagKey: string,
   defaultValue: boolean = false,
   cacheTTL: number = 5 * 60 * 1000, // 5 minutes
-  context?: string,
+  targetId?: string,
 ): UseFeatureFlagReturn {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-require-imports
@@ -993,9 +1031,9 @@ export function useFeatureFlagCached(
         try {
           setIsLoading(true);
 
-          // Check cache first (include context in cache key)
-          const cacheKey = context
-            ? `flagvault_${flagKey}:${context}`
+          // Check cache first (include targetId in cache key)
+          const cacheKey = targetId
+            ? `flagvault_${flagKey}:${targetId}`
             : `flagvault_${flagKey}`;
           const cachedData = getCachedFlag(cacheKey, cacheTTL);
 
@@ -1009,7 +1047,9 @@ export function useFeatureFlagCached(
           }
 
           // Fetch from API
-          const enabled = await sdk.isEnabled(flagKey, defaultValue, context);
+          const enabled = await sdk.isEnabled(flagKey, defaultValue, {
+            targetId,
+          });
 
           // Update cache
           setCachedFlag(cacheKey, enabled);
@@ -1037,7 +1077,7 @@ export function useFeatureFlagCached(
       return () => {
         isMounted = false;
       };
-    }, [sdk, flagKey, defaultValue, cacheTTL, context]);
+    }, [sdk, flagKey, defaultValue, cacheTTL, targetId]);
 
     return { isEnabled, isLoading, error };
   } catch {

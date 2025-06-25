@@ -923,9 +923,9 @@ describe("FlagVaultSDK", () => {
 
       await sdk.isEnabled("test-flag", false, "user-123");
 
-      // Verify the API was called with context parameter
+      // Verify the API was called with targetId parameter (context parameter gets converted)
       expect(fetchMock).toHaveBeenCalledWith(
-        expect.stringContaining("context=user-123"),
+        expect.stringContaining("targetId=user-123"),
         expect.any(Object),
       );
     });
@@ -939,9 +939,9 @@ describe("FlagVaultSDK", () => {
 
       await sdk.isEnabled("test-flag", false);
 
-      // Verify the API was called without context parameter
+      // Verify the API was called without targetId parameter
       expect(fetchMock).toHaveBeenCalledWith(
-        expect.not.stringContaining("context="),
+        expect.not.stringContaining("targetId="),
         expect.any(Object),
       );
     });
@@ -1217,11 +1217,11 @@ describe("FlagVaultSDK", () => {
 
       const sdk = createSDK({ apiKey: "test-api-key" });
 
-      // Use context with special characters that need encoding
+      // Use context with special characters that need encoding (gets converted to targetId)
       await sdk.isEnabled("test-flag", false, "user@example.com");
 
       expect(fetchMock).toHaveBeenCalledWith(
-        expect.stringContaining("context=user%40example.com"),
+        expect.stringContaining("targetId=user%40example.com"),
         expect.any(Object),
       );
     });
